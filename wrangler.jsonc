@@ -15,28 +15,33 @@
 	},
 	"compatibility_flags": [
 		"nodejs_compat"
-	]
+	],
 	/**
-	 * Smart Placement
-	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
+	 * D1 Database Bindings
+	 * https://developers.cloudflare.com/d1/
 	 */
-	// "placement": {  "mode": "smart" }
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "stms-db",
+			"database_id": "1f58195b-2d72-44dc-b2a4-259eab92b403",
+			"remote": false
+		}
+	],
 	/**
-	 * Bindings
-	 * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
-	 * databases, object storage, AI inference, real-time communication and more.
-	 * https://developers.cloudflare.com/workers/runtime-apis/bindings/
+	 * Cron Triggers for scheduled tasks
+	 * https://developers.cloudflare.com/workers/configuration/cron-triggers/
 	 */
+	"triggers": {
+		"crons": ["*/5 * * * *"]
+	},
 	/**
 	 * Environment Variables
 	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
 	 * Note: Use secrets to store sensitive data.
 	 * https://developers.cloudflare.com/workers/configuration/secrets/
 	 */
-	// "vars": {  "MY_VARIABLE": "production_value" }
-	/**
-	 * Service Bindings (communicate between multiple Workers)
-	 * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
-	 */
-	// "services": [  {   "binding": "MY_SERVICE",   "service": "my-service"  } ]
+	"vars": {
+		"ENVIRONMENT": "development"
+	}
 }

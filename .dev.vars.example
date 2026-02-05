@@ -1,0 +1,14 @@
+# 开发环境变量示例文件
+# 复制此文件为 .dev.vars 并填入实际值
+
+ENVIRONMENT=development
+
+# NotifyX配置
+NOTIFYX_API_KEY=your_notifyx_api_key_here
+NOTIFYX_CHANNEL_ID=your_channel_id_here
+
+# JWT密钥
+JWT_SECRET=your_jwt_secret_key_here
+
+# 数据库配置
+DB_NAME=stms-db

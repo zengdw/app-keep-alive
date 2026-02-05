@@ -8,7 +8,7 @@ const name = ref('Unknown')
 const getName = async () => {
   const res = await fetch('/api/')
   const data = await res.json()
-  name.value = data.name
+  name.value = data.message
 }
 </script>
 

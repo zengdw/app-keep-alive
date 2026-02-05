@@ -4,13 +4,19 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "vite",
+		"dev": "run-p dev:frontend dev:backend",
+		"dev:frontend": "vite",
+		"dev:backend": "wrangler dev --local --persist-to=.wrangler/state",
 		"build": "run-p type-check \"build-only {@}\" --",
 		"preview": "pnpm run build && wrangler dev",
 		"build-only": "vite build",
 		"type-check": "vue-tsc --build",
 		"deploy": "pnpm run build && wrangler deploy",
-		"cf-typegen": "wrangler types"
+		"cf-typegen": "wrangler types",
+		"db:create": "wrangler d1 create stms-db",
+		"db:migrate": "wrangler d1 migrations apply stms-db --local",
+		"db:migrate:prod": "wrangler d1 migrations apply stms-db",
+		"db:console": "wrangler d1 execute stms-db --local --command=\"SELECT name FROM sqlite_master WHERE type='table';\""
 	},
 	"dependencies": {
 		"vue": "^3.5.27",
