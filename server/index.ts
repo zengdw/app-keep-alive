@@ -1,21 +1,20 @@
-import { Environment } from './types';
-import { createDatabaseService } from './utils/database';
+import { Environment } from './types/index.js';
+import { DatabaseUtils } from './utils/database.js';
 
 export default {
 	async fetch(request: Request, env: Environment, ctx: ExecutionContext): Promise<Response> {
 		try {
 			const url = new URL(request.url);
 			
-			// 创建数据库服务
-			const db = createDatabaseService(env);
-			
 			// 健康检查端点
 			if (url.pathname === '/api/health') {
-				const isHealthy = await db.healthCheck();
+				const healthCheck = await DatabaseUtils.healthCheck(env);
 				return new Response(JSON.stringify({
-					status: isHealthy ? 'healthy' : 'unhealthy',
+					status: healthCheck.healthy ? 'healthy' : 'unhealthy',
 					timestamp: new Date().toISOString(),
-					environment: env.ENVIRONMENT
+					environment: env.ENVIRONMENT,
+					database: healthCheck.details,
+					errors: healthCheck.errors
 				}), {
 					headers: { 'Content-Type': 'application/json' }
 				});

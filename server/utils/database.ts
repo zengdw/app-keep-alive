@@ -1,101 +1,158 @@
-import { Environment } from '../types';
+import { Environment } from '../types/index.js';
 
 /**
- * 数据库连接和查询工具函数
+ * 数据库工具类
+ * 提供数据库连接和基础操作方法
  */
-export class DatabaseService {
-  private db: D1Database;
-
-  constructor(env: Environment) {
-    this.db = env.DB;
-  }
-
+export class DatabaseUtils {
   /**
-   * 执行查询并返回结果
+   * 测试数据库连接
+   * @param env 环境变量
+   * @returns 连接测试结果
    */
-  async query<T = any>(sql: string, params: any[] = []): Promise<T[]> {
+  static async testConnection(env: Environment): Promise<{ success: boolean; error?: string }> {
     try {
-      const result = await this.db.prepare(sql).bind(...params).all();
-      return result.results as T[];
+      const result = await env.DB.prepare('SELECT 1 as test').first();
+      return { success: true };
     } catch (error) {
-      console.error('Database query error:', error);
-      throw new Error(`数据库查询失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : '未知错误' 
+      };
     }
   }
 
   /**
-   * 执行查询并返回单个结果
+   * 检查表是否存在
+   * @param env 环境变量
+   * @param tableName 表名
+   * @returns 表是否存在
    */
-  async queryOne<T = any>(sql: string, params: any[] = []): Promise<T | null> {
+  static async tableExists(env: Environment, tableName: string): Promise<boolean> {
     try {
-      const result = await this.db.prepare(sql).bind(...params).first();
-      return result as T | null;
-    } catch (error) {
-      console.error('Database query error:', error);
-      throw new Error(`数据库查询失败: ${error instanceof Error ? error.message : '未知错误'}`);
-    }
-  }
-
-  /**
-   * 执行插入、更新或删除操作
-   */
-  async execute(sql: string, params: any[] = []): Promise<D1Result> {
-    try {
-      const result = await this.db.prepare(sql).bind(...params).run();
-      return result;
-    } catch (error) {
-      console.error('Database execute error:', error);
-      throw new Error(`数据库操作失败: ${error instanceof Error ? error.message : '未知错误'}`);
-    }
-  }
-
-  /**
-   * 执行事务
-   */
-  async transaction(queries: Array<{ sql: string; params?: any[] }>): Promise<D1Result[]> {
-    try {
-      const statements = queries.map(({ sql, params = [] }) => 
-        this.db.prepare(sql).bind(...params)
-      );
-      const results = await this.db.batch(statements);
-      return results;
-    } catch (error) {
-      console.error('Database transaction error:', error);
-      throw new Error(`数据库事务失败: ${error instanceof Error ? error.message : '未知错误'}`);
-    }
-  }
-
-  /**
-   * 检查数据库连接
-   */
-  async healthCheck(): Promise<boolean> {
-    try {
-      await this.query('SELECT 1');
-      return true;
-    } catch (error) {
-      console.error('Database health check failed:', error);
+      const result = await env.DB.prepare(
+        'SELECT name FROM sqlite_master WHERE type="table" AND name=?'
+      ).bind(tableName).first();
+      return !!result;
+    } catch {
       return false;
     }
   }
 
   /**
-   * 生成UUID
+   * 获取表的行数
+   * @param env 环境变量
+   * @param tableName 表名
+   * @returns 行数
    */
-  generateId(): string {
-    return crypto.randomUUID();
+  static async getTableRowCount(env: Environment, tableName: string): Promise<number> {
+    try {
+      const result = await env.DB.prepare(`SELECT COUNT(*) as count FROM ${tableName}`).first();
+      return (result as any)?.count || 0;
+    } catch {
+      return 0;
+    }
   }
 
   /**
-   * 获取当前时间戳
+   * 验证数据库架构完整性
+   * @param env 环境变量
+   * @returns 验证结果
    */
-  getCurrentTimestamp(): string {
-    return new Date().toISOString();
-  }
-}
+  static async validateSchema(env: Environment): Promise<{ valid: boolean; errors: string[] }> {
+    const errors: string[] = [];
+    const requiredTables = ['users', 'tasks', 'execution_logs', 'notification_settings'];
 
-/**
- * 创建数据库服务实例
- */
-export function createDatabaseService(env: Environment): DatabaseService {
-  return new DatabaseService(env);
+    try {
+      // 检查所有必需的表是否存在
+      for (const table of requiredTables) {
+        const exists = await this.tableExists(env, table);
+        if (!exists) {
+          errors.push(`表 ${table} 不存在`);
+        }
+      }
+
+      // 检查索引是否存在
+      const indexResult = await env.DB.prepare(
+        'SELECT name FROM sqlite_master WHERE type="index" AND name LIKE "idx_%"'
+      ).all();
+      
+      const expectedIndexes = [
+        'idx_tasks_type',
+        'idx_tasks_enabled', 
+        'idx_tasks_created_by',
+        'idx_execution_logs_task_id',
+        'idx_execution_logs_execution_time',
+        'idx_execution_logs_status'
+      ];
+
+      const existingIndexes = indexResult.results.map((row: any) => row.name);
+      
+      for (const expectedIndex of expectedIndexes) {
+        if (!existingIndexes.includes(expectedIndex)) {
+          errors.push(`索引 ${expectedIndex} 不存在`);
+        }
+      }
+
+    } catch (error) {
+      errors.push(`数据库架构验证失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
+    };
+  }
+
+  /**
+   * 执行数据库健康检查
+   * @param env 环境变量
+   * @returns 健康检查结果
+   */
+  static async healthCheck(env: Environment): Promise<{
+    healthy: boolean;
+    details: {
+      connection: boolean;
+      schema: boolean;
+      tables: Record<string, number>;
+    };
+    errors: string[];
+  }> {
+    const errors: string[] = [];
+    let connectionHealthy = false;
+    let schemaHealthy = false;
+    const tables: Record<string, number> = {};
+
+    // 测试连接
+    const connectionTest = await this.testConnection(env);
+    connectionHealthy = connectionTest.success;
+    if (!connectionHealthy && connectionTest.error) {
+      errors.push(`数据库连接失败: ${connectionTest.error}`);
+    }
+
+    // 验证架构
+    if (connectionHealthy) {
+      const schemaValidation = await this.validateSchema(env);
+      schemaHealthy = schemaValidation.valid;
+      if (!schemaHealthy) {
+        errors.push(...schemaValidation.errors);
+      }
+
+      // 获取表行数
+      const tableNames = ['users', 'tasks', 'execution_logs', 'notification_settings'];
+      for (const tableName of tableNames) {
+        tables[tableName] = await this.getTableRowCount(env, tableName);
+      }
+    }
+
+    return {
+      healthy: connectionHealthy && schemaHealthy,
+      details: {
+        connection: connectionHealthy,
+        schema: schemaHealthy,
+        tables
+      },
+      errors
+    };
+  }
 }
