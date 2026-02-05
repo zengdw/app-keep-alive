@@ -58,6 +58,7 @@ graph TB
 project-root/
 ├── wrangler.toml                 # Wrangler配置文件
 ├── package.json                  # 项目依赖
+├── tsconfig.json                 # TypeScript配置文件
 ├── src/                         # 后端代码
 │   ├── index.ts                 # Worker入口文件
 │   ├── routes/                  # API路由
@@ -81,8 +82,8 @@ project-root/
 │   └── types/                   # TypeScript类型定义
 │       └── index.ts
 ├── frontend/                    # 前端代码
-│   ├── src/                     # Vue.js源码
-│   │   ├── main.js
+│   ├── src/                     # Vue.js + TypeScript源码
+│   │   ├── main.ts
 │   │   ├── App.vue
 │   │   ├── components/
 │   │   ├── views/
@@ -91,7 +92,8 @@ project-root/
 │   │   └── api/
 │   ├── public/
 │   ├── package.json
-│   └── vite.config.js
+│   ├── tsconfig.json
+│   └── vite.config.ts
 ├── migrations/                  # 数据库迁移文件
 │   └── 0001_initial.sql
 └── tests/                       # 测试文件
@@ -123,7 +125,7 @@ project-root/
 ### 前端组件
 
 #### 1. 认证组件 (AuthComponent)
-```javascript
+```typescript
 // 接口定义
 interface AuthComponent {
   login(credentials: LoginCredentials): Promise<AuthResult>
@@ -145,7 +147,7 @@ interface AuthResult {
 ```
 
 #### 2. 任务管理组件 (TaskManagementComponent)
-```javascript
+```typescript
 interface TaskManagementComponent {
   createTask(task: TaskConfig): Promise<Task>
   updateTask(id: string, task: TaskConfig): Promise<Task>
@@ -179,7 +181,7 @@ interface NotificationConfig {
 ```
 
 #### 3. 日志查看组件 (LogViewComponent)
-```javascript
+```typescript
 interface LogViewComponent {
   getLogs(filter: LogFilter): Promise<LogEntry[]>
   exportLogs(filter: LogFilter): Promise<Blob>
@@ -199,7 +201,7 @@ interface LogFilter {
 ### 后端服务
 
 #### 1. API路由处理器 (APIRouter)
-```javascript
+```typescript
 interface APIRouter {
   handleRequest(request: Request, env: Environment): Promise<Response>
   routeStatic(request: Request): Promise<Response> // 处理静态文件请求
@@ -217,7 +219,7 @@ interface StaticFileHandler {
 ```
 
 #### 2. 认证服务 (AuthenticationService)
-```javascript
+```typescript
 interface AuthenticationService {
   authenticate(credentials: LoginCredentials): Promise<AuthResult>
   validateToken(token: string): Promise<User | null>
@@ -234,7 +236,7 @@ interface User {
 ```
 
 #### 3. 任务服务 (TaskService)
-```javascript
+```typescript
 interface TaskService {
   createTask(task: TaskConfig, userId: string): Promise<Task>
   updateTask(id: string, task: TaskConfig, userId: string): Promise<Task>
@@ -269,7 +271,7 @@ interface ExecutionResult {
 ```
 
 #### 4. 通知服务 (NotificationService)
-```javascript
+```typescript
 interface NotificationService {
   sendNotifyXMessage(config: NotifyXConfig): Promise<boolean>
   sendFailureAlert(task: Task, error: string): Promise<void>
@@ -288,7 +290,7 @@ interface NotifyXConfig {
 ```
 
 #### 5. Cron处理器 (CronHandler)
-```javascript
+```typescript
 interface CronHandler {
   handleScheduledEvent(event: ScheduledEvent, env: Environment): Promise<void>
   processKeepaliveTasks(): Promise<void>
@@ -562,7 +564,7 @@ erDiagram
 - 两者互补，提供全面覆盖（单元测试捕获具体错误，属性测试验证通用正确性）
 
 ### 基于属性的测试配置
-- **测试库**: 使用JavaScript的fast-check库进行基于属性的测试
+- **测试库**: 使用TypeScript的fast-check库进行基于属性的测试
 - **迭代次数**: 每个属性测试最少运行100次迭代（由于随机化）
 - **测试标记**: 每个测试必须引用其设计文档属性
 - 标记格式: **Feature: app-keepalive-system, Property {number}: {property_text}**
