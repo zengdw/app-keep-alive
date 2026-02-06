@@ -16,7 +16,7 @@
 - **前端**: Vue 3 + TypeScript + Vite
 - **后端**: Cloudflare Worker + TypeScript
 - **数据库**: Cloudflare D1 (SQLite)
-- **通知服务**: NotifyX平台集成
+- **通知服务**: NotifyX,Resend平台集成
 - **部署**: Cloudflare全球边缘网络
 
 ## 快速开始

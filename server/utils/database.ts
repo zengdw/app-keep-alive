@@ -417,17 +417,40 @@ export class DatabaseUtils {
    * @param env 环境变量
    * @param taskId 任务ID
    * @param limit 限制数量
+   * @param offset 偏移量
    * @returns 操作结果
    */
   static async getExecutionLogsByTaskId(
     env: Environment, 
     taskId: string, 
-    limit: number = 100
+    limit: number = 100,
+    offset: number = 0
   ): Promise<DatabaseResult<ExecutionLog[]>> {
     return this.executeWithRetry(async () => {
       const result = await env.DB.prepare(
-        'SELECT * FROM execution_logs WHERE task_id = ? ORDER BY execution_time DESC LIMIT ?'
-      ).bind(taskId, limit).all();
+        'SELECT * FROM execution_logs WHERE task_id = ? ORDER BY execution_time DESC LIMIT ? OFFSET ?'
+      ).bind(taskId, limit, offset).all();
+      
+      return result.results.map(row => ExecutionLogModel.fromDatabaseRow(row));
+    });
+  }
+
+  /**
+   * 获取所有执行日志
+   * @param env 环境变量
+   * @param limit 限制数量
+   * @param offset 偏移量
+   * @returns 操作结果
+   */
+  static async getAllExecutionLogs(
+    env: Environment,
+    limit: number = 100,
+    offset: number = 0
+  ): Promise<DatabaseResult<ExecutionLog[]>> {
+    return this.executeWithRetry(async () => {
+      const result = await env.DB.prepare(
+        'SELECT * FROM execution_logs ORDER BY execution_time DESC LIMIT ? OFFSET ?'
+      ).bind(limit, offset).all();
       
       return result.results.map(row => ExecutionLogModel.fromDatabaseRow(row));
     });
