@@ -20,7 +20,7 @@ describe('任务执行引擎集成测试', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockEnv = {
-      DB: {} as D1Database,
+      DB: {} as any,
       ENVIRONMENT: 'test',
       JWT_SECRET: 'test-secret'
     };
