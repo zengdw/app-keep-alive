@@ -3,6 +3,7 @@ import { DatabaseUtils } from '../utils/database.js';
 import { TaskModel } from '../models/task.model.js';
 import { ExecutionLogModel } from '../models/execution-log.model.js';
 import { NotificationService } from './notification.service.js';
+import { LogService } from './log.service.js';
 
 /**
  * 任务服务类
@@ -54,8 +55,27 @@ export class TaskService {
         return { success: false, error: result.error };
       }
 
+      // 记录审计日志
+      await LogService.logAudit(
+        env,
+        userId,
+        'create_task',
+        'task',
+        task.id,
+        { name: task.name, type: task.type }
+      );
+
       return { success: true, data: result.data };
     } catch (error) {
+      // 记录错误日志
+      await LogService.logError(
+        env,
+        'TASK_SERVICE_ERROR',
+        '创建任务失败',
+        error instanceof Error ? error.stack : undefined,
+        { userId, taskData }
+      );
+
       return {
         success: false,
         error: `创建任务失败: ${error instanceof Error ? error.message : '未知错误'}`
@@ -97,8 +117,27 @@ export class TaskService {
         return { success: false, error: result.error };
       }
 
+      // 记录审计日志
+      await LogService.logAudit(
+        env,
+        userId,
+        'update_task',
+        'task',
+        taskId,
+        { updateData }
+      );
+
       return { success: true, data: result.data };
     } catch (error) {
+      // 记录错误日志
+      await LogService.logError(
+        env,
+        'TASK_SERVICE_ERROR',
+        '更新任务失败',
+        error instanceof Error ? error.stack : undefined,
+        { userId, taskId, updateData }
+      );
+
       return {
         success: false,
         error: `更新任务失败: ${error instanceof Error ? error.message : '未知错误'}`
@@ -138,8 +177,27 @@ export class TaskService {
         return { success: false, error: result.error };
       }
 
+      // 记录审计日志
+      await LogService.logAudit(
+        env,
+        userId,
+        'delete_task',
+        'task',
+        taskId,
+        { name: existingResult.data.name, type: existingResult.data.type }
+      );
+
       return { success: true };
     } catch (error) {
+      // 记录错误日志
+      await LogService.logError(
+        env,
+        'TASK_SERVICE_ERROR',
+        '删除任务失败',
+        error instanceof Error ? error.stack : undefined,
+        { userId, taskId }
+      );
+
       return {
         success: false,
         error: `删除任务失败: ${error instanceof Error ? error.message : '未知错误'}`
@@ -344,9 +402,9 @@ export class TaskService {
       
       // 构建完整的NotifyX配置
       const notifyxConfig: NotifyXConfig = {
-        ...config.notifyxConfig,
+        apiKey: config.notifyxConfig.apiKey,
         content: config.content,
-        title: config.title || config.notifyxConfig.title,
+        title: config.title,
       };
       
       // 调用通知服务发送通知

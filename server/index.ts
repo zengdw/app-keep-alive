@@ -105,6 +105,18 @@ export default {
 				return await LogRoutes.cleanup(request, env);
 			}
 
+			if (pathname === '/api/logs/statistics' && method === 'GET') {
+				return await LogRoutes.statistics(request, env);
+			}
+
+			if (pathname === '/api/logs/errors' && method === 'GET') {
+				return await LogRoutes.errors(request, env);
+			}
+
+			if (pathname === '/api/logs/audits' && method === 'GET') {
+				return await LogRoutes.audits(request, env);
+			}
+
 			// 匹配 /api/logs/:id
 			const logIdMatch = pathname.match(/^\/api\/logs\/([^\/]+)$/);
 			if (logIdMatch && method === 'GET') {
