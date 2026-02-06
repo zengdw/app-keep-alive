@@ -26,7 +26,7 @@ describe('TaskService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockEnv = {
-      DB: {} as D1Database,
+      DB: {} as any,
       ENVIRONMENT: 'test',
       JWT_SECRET: 'test-secret'
     };
@@ -74,13 +74,11 @@ describe('TaskService', () => {
         type: 'notification' as const,
         schedule: '0 9 * * *',
         config: {
-          message: '测试通知消息',
+          content: '测试通知消息',
           title: '测试标题',
-          priority: 'normal' as const,
           notifyxConfig: {
             apiKey: 'test-key',
-            channelId: 'channel-123',
-            message: '测试通知消息'
+            content: '测试通知消息'
           }
         } as NotificationConfig,
         enabled: true
@@ -483,13 +481,11 @@ describe('TaskService', () => {
         type: 'notification',
         schedule: '0 9 * * *',
         config: {
-          message: '测试通知',
+          content: '测试通知',
           title: '测试',
-          priority: 'normal',
           notifyxConfig: {
             apiKey: 'test-key',
-            channelId: 'channel-123',
-            message: '测试通知'
+            content: '测试通知'
           }
         } as NotificationConfig,
         enabled: true,
@@ -530,11 +526,10 @@ describe('TaskService', () => {
         type: 'notification',
         schedule: '0 9 * * *',
         config: {
-          message: '测试通知',
+          content: '测试通知',
           notifyxConfig: {
             apiKey: 'test-key',
-            channelId: 'channel-123',
-            message: '测试通知'
+            content: '测试通知'
           }
         } as NotificationConfig,
         enabled: true,

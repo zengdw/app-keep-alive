@@ -529,14 +529,20 @@ export class DatabaseUtils {
     return this.executeWithRetry(async () => {
       const data = NotificationSettingsModel.toDatabaseInsert(settings);
       await env.DB.prepare(
-        'INSERT INTO notification_settings (id, user_id, email_enabled, email_address, webhook_enabled, webhook_url, failure_threshold, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        `INSERT INTO notification_settings 
+         (id, user_id, email_enabled, email_address, email_api_key, webhook_enabled, webhook_url, 
+          notifyx_enabled, notifyx_api_key, failure_threshold, created_at, updated_at) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).bind(
         data.id,
         data.user_id,
         data.email_enabled,
         data.email_address,
+        data.email_api_key,
         data.webhook_enabled,
         data.webhook_url,
+        data.notifyx_enabled,
+        data.notifyx_api_key,
         data.failure_threshold,
         data.created_at,
         data.updated_at
@@ -596,12 +602,20 @@ export class DatabaseUtils {
 
       // 执行更新
       await env.DB.prepare(
-        'UPDATE notification_settings SET email_enabled = ?, email_address = ?, webhook_enabled = ?, webhook_url = ?, failure_threshold = ?, updated_at = ? WHERE user_id = ?'
+        `UPDATE notification_settings 
+         SET email_enabled = ?, email_address = ?, email_api_key = ?,
+             webhook_enabled = ?, webhook_url = ?, 
+             notifyx_enabled = ?, notifyx_api_key = ?,
+             failure_threshold = ?, updated_at = ? 
+         WHERE user_id = ?`
       ).bind(
         data.email_enabled,
         data.email_address,
+        data.email_api_key,
         data.webhook_enabled,
         data.webhook_url,
+        data.notifyx_enabled,
+        data.notifyx_api_key,
         data.failure_threshold,
         data.updated_at,
         userId

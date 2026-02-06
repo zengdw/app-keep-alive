@@ -33,13 +33,21 @@
 	 * https://developers.cloudflare.com/workers/configuration/cron-triggers/
 	 */
 	"triggers": {
-		"crons": ["*/5 * * * *"]
+		"crons": [
+			"*/5 * * * *"
+		]
 	},
 	/**
 	 * Environment Variables
 	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
 	 * Note: Use secrets to store sensitive data.
 	 * https://developers.cloudflare.com/workers/configuration/secrets/
+	 * 
+	 * 开发环境：环境变量在 .dev.vars 文件中配置
+	 * 生产环境：使用 wrangler secret put 命令设置敏感信息
+	 * 
+	 * 设置生产环境密钥：
+	 * wrangler secret put JWT_SECRET
 	 */
 	"vars": {
 		"ENVIRONMENT": "development"

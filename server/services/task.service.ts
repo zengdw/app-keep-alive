@@ -1,7 +1,8 @@
-import { Environment, Task, KeepaliveConfig, NotificationConfig, ExecutionResult } from '../types/index.js';
+import { Environment, Task, KeepaliveConfig, NotificationConfig, ExecutionResult, NotifyXConfig } from '../types/index.js';
 import { DatabaseUtils } from '../utils/database.js';
 import { TaskModel } from '../models/task.model.js';
 import { ExecutionLogModel } from '../models/execution-log.model.js';
+import { NotificationService } from './notification.service.js';
 
 /**
  * 任务服务类
@@ -292,6 +293,9 @@ export class TaskService {
         last_status: executionResult.success ? 'success' : 'failure'
       });
 
+      // 处理通知
+      await this.handleTaskNotifications(env, task, executionResult);
+
       return executionResult;
     } catch (error) {
       const responseTime = Date.now() - startTime;
@@ -310,6 +314,9 @@ export class TaskService {
         last_executed: new Date().toISOString(),
         last_status: 'failure'
       });
+
+      // 处理通知
+      await this.handleTaskNotifications(env, task, executionResult);
 
       return executionResult;
     }
@@ -335,42 +342,26 @@ export class TaskService {
 
       const config = task.config as NotificationConfig;
       
-      // 调用通知服务发送通知
-      // 注意：这里需要导入NotificationService，但为了避免循环依赖，
-      // 我们直接在这里实现简单的NotifyX API调用
-      const notifyxConfig = config.notifyxConfig;
+      // 构建完整的NotifyX配置
+      const notifyxConfig: NotifyXConfig = {
+        ...config.notifyxConfig,
+        content: config.content,
+        title: config.title || config.notifyxConfig.title,
+      };
       
-      const response = await fetch('https://api.notifyx.cn/v1/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${notifyxConfig.apiKey}`
-        },
-        body: JSON.stringify({
-          channel_id: notifyxConfig.channelId,
-          title: config.title || notifyxConfig.title || '定时通知',
-          message: config.message,
-          priority: config.priority || 'normal',
-          recipients: notifyxConfig.recipients
-        }),
-        signal: AbortSignal.timeout(30000)
-      });
-
+      // 调用通知服务发送通知
+      const result = await NotificationService.sendNotifyXMessage(notifyxConfig);
+      
       const responseTime = Date.now() - startTime;
 
       // 记录执行结果
       const executionResult: ExecutionResult = {
-        success: response.ok,
+        success: result.success,
         responseTime,
-        statusCode: response.status,
+        statusCode: result.success ? 200 : 500,
+        error: result.error,
         timestamp: new Date()
       };
-
-      // 如果请求失败，记录错误信息
-      if (!response.ok) {
-        const errorText = await response.text();
-        executionResult.error = `通知发送失败: HTTP ${response.status} - ${errorText}`;
-      }
 
       // 记录执行日志
       await this.logExecution(env, task.id, executionResult);
@@ -491,6 +482,43 @@ export class TaskService {
         success: false,
         error: `获取任务统计失败: ${error instanceof Error ? error.message : '未知错误'}`
       };
+    }
+  }
+
+  /**
+   * 处理任务执行后的通知
+   * @param env 环境变量
+   * @param task 任务对象
+   * @param result 执行结果
+   */
+  private static async handleTaskNotifications(
+    env: Environment,
+    task: Task,
+    result: ExecutionResult
+  ): Promise<void> {
+    try {
+      // 只对保活任务发送失败/恢复通知
+      if (task.type !== 'keepalive') {
+        return;
+      }
+
+      if (!result.success) {
+        // 任务失败，发送失败通知
+        await NotificationService.sendFailureAlert(
+          env,
+          task,
+          result.error || '未知错误'
+        );
+      } else {
+        // 任务成功，检查是否需要发送恢复通知
+        const shouldSendRecovery = await NotificationService.shouldSendRecoveryAlert(env, task.id);
+        if (shouldSendRecovery) {
+          await NotificationService.sendRecoveryAlert(env, task);
+        }
+      }
+    } catch (error) {
+      console.error('处理任务通知失败:', error);
+      // 通知失败不应该影响任务执行结果，只记录错误
     }
   }
 }

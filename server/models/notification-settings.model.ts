@@ -28,6 +28,19 @@ export class NotificationSettingsModel {
   }
 
   /**
+   * 验证邮件 API 密钥
+   * @param apiKey 邮件 API 密钥
+   * @returns 是否有效
+   */
+  static validateEmailApiKey(apiKey: string): boolean {
+    if (!apiKey || typeof apiKey !== 'string') {
+      return false;
+    }
+    // 邮件服务 API 密钥通常是一个长字符串
+    return apiKey.trim().length >= 20 && apiKey.trim().length <= 500;
+  }
+
+  /**
    * 验证Webhook URL
    * @param url Webhook URL
    * @returns 是否有效
@@ -42,6 +55,19 @@ export class NotificationSettingsModel {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * 验证NotifyX API密钥
+   * @param apiKey NotifyX API密钥
+   * @returns 是否有效
+   */
+  static validateNotifyXApiKey(apiKey: string): boolean {
+    if (!apiKey || typeof apiKey !== 'string') {
+      return false;
+    }
+    // NotifyX API密钥通常是一个长字符串
+    return apiKey.trim().length >= 20 && apiKey.trim().length <= 200;
   }
 
   /**
@@ -73,6 +99,12 @@ export class NotificationSettingsModel {
       } else if (!this.validateEmail(settingsData.email_address)) {
         errors.push('邮箱地址格式无效');
       }
+      
+      if (!settingsData.email_api_key) {
+        errors.push('启用邮件通知时必须提供邮件 API 密钥');
+      } else if (!this.validateEmailApiKey(settingsData.email_api_key)) {
+        errors.push('邮件 API 密钥格式无效');
+      }
     }
 
     // 验证Webhook设置
@@ -81,6 +113,15 @@ export class NotificationSettingsModel {
         errors.push('启用Webhook通知时必须提供Webhook URL');
       } else if (!this.validateWebhookUrl(settingsData.webhook_url)) {
         errors.push('Webhook URL格式无效');
+      }
+    }
+
+    // 验证NotifyX设置
+    if (settingsData.notifyx_enabled === true) {
+      if (!settingsData.notifyx_api_key) {
+        errors.push('启用NotifyX通知时必须提供API密钥');
+      } else if (!this.validateNotifyXApiKey(settingsData.notifyx_api_key)) {
+        errors.push('NotifyX API密钥格式无效');
       }
     }
 
@@ -105,8 +146,12 @@ export class NotificationSettingsModel {
     user_id: string;
     email_enabled?: boolean;
     email_address?: string;
+    email_api_key?: string;
     webhook_enabled?: boolean;
     webhook_url?: string;
+    notifyx_enabled?: boolean;
+    notifyx_api_key?: string;
+    notifyx_channel_id?: string;
     failure_threshold?: number;
   }): NotificationSettings {
     const now = new Date().toISOString();
@@ -115,8 +160,11 @@ export class NotificationSettingsModel {
       user_id: settingsData.user_id,
       email_enabled: settingsData.email_enabled || false,
       email_address: settingsData.email_address,
+      email_api_key: settingsData.email_api_key,
       webhook_enabled: settingsData.webhook_enabled || false,
       webhook_url: settingsData.webhook_url,
+      notifyx_enabled: settingsData.notifyx_enabled || false,
+      notifyx_api_key: settingsData.notifyx_api_key,
       failure_threshold: settingsData.failure_threshold || 3,
       created_at: now,
       updated_at: now
@@ -148,8 +196,11 @@ export class NotificationSettingsModel {
       user_id: row.user_id,
       email_enabled: Boolean(row.email_enabled),
       email_address: row.email_address || undefined,
+      email_api_key: row.email_api_key || undefined,
       webhook_enabled: Boolean(row.webhook_enabled),
       webhook_url: row.webhook_url || undefined,
+      notifyx_enabled: Boolean(row.notifyx_enabled),
+      notifyx_api_key: row.notifyx_api_key || undefined,
       failure_threshold: row.failure_threshold,
       created_at: row.created_at,
       updated_at: row.updated_at
@@ -167,8 +218,11 @@ export class NotificationSettingsModel {
       user_id: settings.user_id,
       email_enabled: settings.email_enabled ? 1 : 0,
       email_address: settings.email_address || null,
+      email_api_key: settings.email_api_key || null,
       webhook_enabled: settings.webhook_enabled ? 1 : 0,
       webhook_url: settings.webhook_url || null,
+      notifyx_enabled: settings.notifyx_enabled ? 1 : 0,
+      notifyx_api_key: settings.notifyx_api_key || null,
       failure_threshold: settings.failure_threshold,
       created_at: settings.created_at,
       updated_at: settings.updated_at
@@ -182,7 +236,8 @@ export class NotificationSettingsModel {
    * @returns 是否需要发送通知
    */
   static shouldSendNotification(settings: NotificationSettings, failureCount: number): boolean {
-    return failureCount >= settings.failure_threshold && (settings.email_enabled || settings.webhook_enabled);
+    return failureCount >= settings.failure_threshold && 
+           (settings.email_enabled || settings.webhook_enabled || settings.notifyx_enabled);
   }
 
   /**
@@ -193,12 +248,16 @@ export class NotificationSettingsModel {
   static getAvailableChannels(settings: NotificationSettings): string[] {
     const channels: string[] = [];
     
-    if (settings.email_enabled && settings.email_address) {
+    if (settings.email_enabled && settings.email_address && settings.email_api_key) {
       channels.push('email');
     }
     
     if (settings.webhook_enabled && settings.webhook_url) {
       channels.push('webhook');
+    }
+    
+    if (settings.notifyx_enabled && settings.notifyx_api_key) {
+      channels.push('notifyx');
     }
     
     return channels;

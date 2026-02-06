@@ -222,5 +222,16 @@ describe('数据模型测试', () => {
       expect(NotificationSettingsModel.validateFailureThreshold(101)).toBe(false);
       expect(NotificationSettingsModel.validateFailureThreshold(-1)).toBe(false);
     });
+
+    it('应该验证有效的邮件 API 密钥', () => {
+      expect(NotificationSettingsModel.validateEmailApiKey('re_1234567890abcdefghijklmnopqrstuvwxyz')).toBe(true);
+      expect(NotificationSettingsModel.validateEmailApiKey('sk_test_1234567890abcdefghijklmnopqrstuvwxyz')).toBe(true);
+    });
+
+    it('应该拒绝无效的邮件 API 密钥', () => {
+      expect(NotificationSettingsModel.validateEmailApiKey('short')).toBe(false);
+      expect(NotificationSettingsModel.validateEmailApiKey('')).toBe(false);
+      expect(NotificationSettingsModel.validateEmailApiKey('a'.repeat(501))).toBe(false);
+    });
   });
 });

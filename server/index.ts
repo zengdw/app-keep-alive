@@ -1,5 +1,6 @@
 import { Environment } from './types/index.js';
 import { DatabaseUtils } from './utils/database.js';
+import { CronService } from './services/cron.service.js';
 
 export default {
 	async fetch(request: Request, env: Environment, ctx: ExecutionContext): Promise<Response> {
@@ -47,7 +48,23 @@ export default {
 	},
 
 	async scheduled(controller: ScheduledController, env: Environment, ctx: ExecutionContext): Promise<void> {
-		console.log('Cron trigger executed at:', new Date().toISOString());
-		// TODO: 实现定时任务处理逻辑
+		console.log('Cron触发器执行于:', new Date().toISOString());
+		
+		try {
+			// 处理所有定时任务
+			const result = await CronService.handleScheduledEvent(env);
+			
+			if (result.success) {
+				console.log(`定时任务处理成功，执行了 ${result.processed} 个任务`);
+			} else {
+				console.error('定时任务处理失败:', result.errors);
+			}
+			
+			if (result.errors.length > 0) {
+				console.warn('部分任务执行出错:', result.errors);
+			}
+		} catch (error) {
+			console.error('定时任务处理异常:', error);
+		}
 	}
 } satisfies ExportedHandler<Environment>;

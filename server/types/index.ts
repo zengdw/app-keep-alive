@@ -25,19 +25,15 @@ export interface KeepaliveConfig {
 }
 
 export interface NotificationConfig {
-  message: string;
-  title?: string;
-  priority?: 'low' | 'normal' | 'high';
+  content: string;
+  title: string;
   notifyxConfig: NotifyXConfig;
 }
 
 export interface NotifyXConfig {
   apiKey: string;
-  channelId: string;
-  message: string;
-  title?: string;
-  priority?: 'low' | 'normal' | 'high';
-  recipients?: string[];
+  content: string;
+  title: string;
 }
 
 // 任务模型
@@ -73,8 +69,11 @@ export interface NotificationSettings {
   user_id: string;
   email_enabled: boolean;
   email_address?: string;
+  email_api_key?: string;
   webhook_enabled: boolean;
   webhook_url?: string;
+  notifyx_enabled: boolean;
+  notifyx_api_key?: string;
   failure_threshold: number;
   created_at: string;
   updated_at: string;
