@@ -501,6 +501,7 @@ describe('前后端API集成测试', () => {
     testUser = {
       id: 'user-test-1',
       username: 'testuser',
+      password_hash: 'hashed_password_placeholder',
       role: 'admin',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()

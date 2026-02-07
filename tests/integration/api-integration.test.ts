@@ -24,6 +24,7 @@ describe('API路由集成测试', () => {
     testUser = {
       id: 'user-api-test-1',
       username: 'apiuser',
+      password_hash: 'hashed_password_placeholder',
       role: 'admin',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
