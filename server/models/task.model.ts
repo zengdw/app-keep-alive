@@ -108,11 +108,10 @@ export class TaskModel {
       errors.push('通知消息长度不能超过1000字符');
     }
 
-    // 验证优先级
-    if (config.priority !== undefined) {
-      const validPriorities = ['low', 'normal', 'high'];
-      if (!validPriorities.includes(config.priority)) {
-        errors.push('优先级必须是 low、normal 或 high');
+    // 验证标题（可选）
+    if (config.title !== undefined) {
+      if (typeof config.title !== 'string' || config.title.length > 100) {
+        errors.push('通知标题必须是字符串且长度不超过100字符');
       }
     }
 
@@ -143,18 +142,18 @@ export class TaskModel {
     }
 
     // 验证API密钥
-    if (!config.apiKey || typeof config.apiKey !== 'string') {
+    if (!config.apiKey || typeof config.apiKey !== 'string' || config.apiKey.trim().length === 0) {
       errors.push('NotifyX API密钥不能为空');
     }
 
-    // 验证频道ID
-    if (!config.channelId || typeof config.channelId !== 'string') {
-      errors.push('NotifyX频道ID不能为空');
+    // 验证标题
+    if (!config.title || typeof config.title !== 'string' || config.title.trim().length === 0) {
+      errors.push('NotifyX标题不能为空');
     }
 
-    // 验证消息
-    if (!config.message || typeof config.message !== 'string') {
-      errors.push('NotifyX消息不能为空');
+    // 验证消息内容
+    if (!config.message || typeof config.message !== 'string' || config.message.trim().length === 0) {
+      errors.push('NotifyX消息内容不能为空');
     }
 
     return { valid: errors.length === 0, errors };

@@ -26,14 +26,14 @@ export interface KeepaliveConfig {
 }
 
 export interface NotificationConfig {
-  content: string;
-  title: string;
+  message: string;
+  title?: string;
   notifyxConfig: NotifyXConfig;
 }
 
 export interface NotifyXConfig {
   apiKey: string;
-  content: string;
+  message: string;
   title: string;
 }
 

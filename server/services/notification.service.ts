@@ -35,7 +35,7 @@ export class NotificationService {
         },
         body: JSON.stringify({
           title: config.title || '系统通知',
-          content: config.content,
+          content: config.message,
         }),
         signal: AbortSignal.timeout(30000)
       });
@@ -102,7 +102,7 @@ export class NotificationService {
       if (settings.notifyx_enabled && settings.notifyx_api_key) {
         const notifyxResult = await this.sendNotifyXMessage({
           apiKey: settings.notifyx_api_key,
-          content: message,
+          message: message,
           title: `任务失败通知: ${task.name}`
         });
         results.push(notifyxResult.success);
@@ -195,7 +195,7 @@ export class NotificationService {
       if (settings.notifyx_enabled && settings.notifyx_api_key) {
         const notifyxResult = await this.sendNotifyXMessage({
           apiKey: settings.notifyx_api_key,
-          content: message,
+          message: message,
           title: `任务恢复通知: ${task.name}`
         });
         results.push(notifyxResult.success);
@@ -274,9 +274,9 @@ export class NotificationService {
     }
 
     // 验证消息
-    if (!config.content || typeof config.content !== 'string' || config.content.trim().length === 0) {
+    if (!config.message || typeof config.message !== 'string' || config.message.trim().length === 0) {
       errors.push('NotifyX消息不能为空');
-    } else if (config.content.length > 2000) {
+    } else if (config.message.length > 2000) {
       errors.push('NotifyX消息长度不能超过2000字符');
     }
 

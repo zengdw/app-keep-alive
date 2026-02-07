@@ -406,7 +406,7 @@ export class HealthRoutes {
       if (env.SYSTEM_NOTIFYX_API_KEY) {
         await NotificationService.sendNotifyXMessage({
           apiKey: env.SYSTEM_NOTIFYX_API_KEY,
-          content: message,
+          message: message,
           title: '系统异常告警'
         });
       }

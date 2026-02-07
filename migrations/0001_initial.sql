@@ -62,4 +62,4 @@ CREATE INDEX idx_execution_logs_status ON execution_logs(status);
 
 -- 插入默认管理员用户
 INSERT INTO users (id, username, password_hash, role) 
-VALUES ('admin-001', 'admin', '$2a$10$N9qo8uLOickgx2ZMRZoMye.IjPeGvGzjYwSxkBtjshTY/v6TFvO2C', 'admin');
+VALUES ('admin-001', 'admin', 'bcb15f821479b4d5772bd0ca866c00ad5f926e3580720659cc80d39c9d09802a', 'admin');

@@ -403,8 +403,8 @@ export class TaskService {
       // 构建完整的NotifyX配置
       const notifyxConfig: NotifyXConfig = {
         apiKey: config.notifyxConfig.apiKey,
-        content: config.content,
-        title: config.title,
+        message: config.message,
+        title: config.title || '系统通知',
       };
       
       // 调用通知服务发送通知
