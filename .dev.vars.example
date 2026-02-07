@@ -1,10 +1,25 @@
-# 开发环境变量示例文件
-# 复制此文件为 .dev.vars 并填入实际值
+# Cloudflare Worker 后端环境变量示例文件
+# 用途：配置后端 Worker 运行时需要的环境变量和敏感信息
+# 使用：复制此文件为 .dev.vars 并填入实际值
+# 
+# 注意：
+# - 此文件用于后端 Worker，不会暴露给前端
+# - 可以安全地存储敏感信息（JWT密钥、API密钥等）
+# - 生产环境使用 wrangler secret put 命令设置
 
+# 环境标识
 ENVIRONMENT=development
 
-# JWT密钥
-JWT_SECRET=your_jwt_secret_key_here
+# JWT 密钥（用于用户认证）
+JWT_SECRET=your_jwt_secret_key_here_change_in_production
 
-# 数据库配置
+# NotifyX 通知平台 API 密钥
+# 获取地址：https://www.notifyx.cn/
+NOTIFYX_API_KEY=your_notifyx_api_key_here
+
+# 邮件服务 API 密钥（Resend）
+# 获取地址：https://resend.com/
+EMAIL_API_KEY=your_email_api_key_here
+
+# 数据库名称（本地开发）
 DB_NAME=stms-db
