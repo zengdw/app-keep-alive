@@ -48,9 +48,9 @@
    pnpm install
    ```
 
-2. **运行开发环境设置脚本**
+2. **🔄 运行数据库迁移**
    ```bash
-   ./scripts/dev-setup.sh
+   pnpx wrangler d1 migrations apply stms-db --local
    ```
 
 3. **配置环境变量**
@@ -118,9 +118,6 @@ pnpm run test:coverage
 ### 数据库
 
 ```bash
-# 创建本地数据库
-pnpm run db:create
-
 # 本地数据库迁移
 pnpm run db:migrate
 
@@ -136,16 +133,13 @@ pnpm run db:create:staging
 # 预发布环境数据库迁移
 pnpm run db:migrate:staging
 
-# 查看数据库表
+# 查看本地数据库表
 pnpm run db:console
 ```
 
 ### 部署
 
 ```bash
-# 部署到开发环境（默认）
-pnpm run deploy
-
 # 部署到生产环境
 pnpm run deploy:production
 
@@ -160,9 +154,6 @@ pnpm run deploy:staging
 ### 日志
 
 ```bash
-# 查看本地日志
-pnpm run logs
-
 # 查看生产环境日志
 pnpm run logs:production
 

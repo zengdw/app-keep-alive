@@ -25,10 +25,10 @@ pnpm run build-only
 # 4. 部署到 Cloudflare
 if [ "$ENVIRONMENT" = "production" ]; then
     echo "📦 部署到生产环境..."
-    wrangler deploy --env production
+    pnpx wrangler deploy --env production
 elif [ "$ENVIRONMENT" = "staging" ]; then
     echo "📦 部署到预发布环境..."
-    wrangler deploy --env staging
+    pnpx wrangler deploy --env staging
 else
     echo "❌ 未知的环境: $ENVIRONMENT"
     echo "支持的环境: production, staging"
