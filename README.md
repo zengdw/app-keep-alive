@@ -56,6 +56,7 @@
 3. **配置环境变量**
    ```bash
    cp .dev.vars.example .dev.vars
+   cp .env.example .env
    # 编辑 .dev.vars 文件并填入实际配置值
    ```
 

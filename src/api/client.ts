@@ -93,9 +93,13 @@ export const authApi = {
     await request('/auth/logout', { method: 'POST' })
   },
 
-  // 验证令牌
+  // 验证令牌（使用 /auth/me 接口）
   async validateToken(): Promise<ApiResponse<{ valid: boolean; user?: any }>> {
-    return request('/auth/validate', { method: 'GET' })
+    const response = await request<{ user: any }>('/auth/me', { method: 'GET' })
+    if (response.success && response.data?.user) {
+      return { success: true, data: { valid: true, user: response.data.user } }
+    }
+    return { success: false, data: { valid: false } }
   },
 
   // 刷新令牌
@@ -208,6 +212,35 @@ export const systemApi = {
   // 获取系统状态
   async getStatus(): Promise<ApiResponse<SystemStatus>> {
     return request<SystemStatus>('/health')
+  }
+}
+
+// 设置 API
+export const settingsApi = {
+  // 修改密码
+  async changePassword(data: { oldPassword: string; newPassword: string }): Promise<ApiResponse<void>> {
+    return request<void>('/settings/password', {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    })
+  },
+
+  // 获取通知设置
+  async getNotificationSettings(): Promise<ApiResponse<any>> {
+    return request<any>('/settings/notifications')
+  },
+
+  // 更新通知设置
+  async updateNotificationSettings(data: any): Promise<ApiResponse<any>> {
+    return request<any>('/settings/notifications', {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    })
+  },
+
+  // 获取已启用的通知渠道
+  async getEnabledChannels(): Promise<ApiResponse<string[]>> {
+    return request<string[]>('/settings/notifications/channels')
   }
 }
 

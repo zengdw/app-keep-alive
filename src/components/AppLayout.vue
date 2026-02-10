@@ -7,6 +7,7 @@
           <router-link to="/" class="nav-link">仪表板</router-link>
           <router-link to="/tasks" class="nav-link">任务管理</router-link>
           <router-link to="/logs" class="nav-link">日志查看</router-link>
+          <router-link to="/settings" class="nav-link">设置</router-link>
         </nav>
         <div class="user-section">
           <span class="user-name">{{ authStore.user?.username }}</span>

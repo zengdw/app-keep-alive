@@ -3,11 +3,11 @@ name: Deploy to Cloudflare Workers
 on:
   push:
     branches:
-      - main
+      - master
       - staging
   pull_request:
     branches:
-      - main
+      - master
       - staging
 
 jobs:

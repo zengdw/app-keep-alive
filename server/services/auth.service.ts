@@ -101,7 +101,7 @@ export class AuthService {
     const encoder = new TextEncoder();
     const data = encoder.encode(`${encodedHeader}.${encodedPayload}`);
     const keyData = encoder.encode(secret);
-    
+
     const cryptoKey = await crypto.subtle.importKey(
       'raw',
       keyData,
@@ -137,7 +137,7 @@ export class AuthService {
       const encoder = new TextEncoder();
       const data = encoder.encode(`${encodedHeader}.${encodedPayload}`);
       const keyData = encoder.encode(secret);
-      
+
       const cryptoKey = await crypto.subtle.importKey(
         'raw',
         keyData,
@@ -392,5 +392,56 @@ export class AuthService {
     }
 
     return this.validateToken(env, token);
+  }
+
+  /**
+   * 修改密码
+   * @param env 环境变量
+   * @param userId 用户ID
+   * @param oldPassword 旧密码
+   * @param newPassword 新密码
+   * @returns 修改结果
+   */
+  static async changePassword(
+    env: Environment,
+    userId: string,
+    oldPassword: string,
+    newPassword: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      // 验证新密码格式
+      if (!UserModel.validatePassword(newPassword)) {
+        return { success: false, error: '新密码格式无效：至少8位，包含字母和数字' };
+      }
+
+      // 获取用户
+      const userResult = await DatabaseUtils.getUserById(env, userId);
+      if (!userResult.success || !userResult.data) {
+        return { success: false, error: '用户不存在' };
+      }
+
+      const user = userResult.data;
+
+      // 验证旧密码
+      const isOldPasswordValid = await this.verifyPassword(oldPassword, user.password_hash);
+      if (!isOldPasswordValid) {
+        return { success: false, error: '旧密码错误' };
+      }
+
+      // 哈希新密码并更新
+      const newPasswordHash = await this.hashPassword(newPassword);
+      const updateResult = await DatabaseUtils.updateUser(env, userId, {
+        password_hash: newPasswordHash
+      } as Partial<User>);
+
+      if (!updateResult.success) {
+        return { success: false, error: updateResult.error || '更新密码失败' };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Change password error:', error);
+      return { success: false, error: '修改密码过程发生错误' };
+    }
   }
 }

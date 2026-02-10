@@ -116,3 +116,25 @@ export interface ApiResponse<T = any> {
   error?: string
   message?: string
 }
+
+// 通知设置类型
+export interface NotificationSettings {
+  id: string
+  userId: string
+  emailEnabled: boolean
+  emailAddress?: string
+  emailApiKey?: string
+  webhookEnabled: boolean
+  webhookUrl?: string
+  notifyxEnabled: boolean
+  notifyxApiKey?: string
+  failureThreshold: number
+  createdAt: string
+  updatedAt: string
+}
+
+// 修改密码请求类型
+export interface ChangePasswordData {
+  oldPassword: string
+  newPassword: string
+}

@@ -129,37 +129,39 @@
             ></textarea>
           </div>
 
-          <div class="form-group">
-            <label for="priority">优先级</label>
-            <select id="priority" v-model="notificationConfig.priority">
-              <option value="low">低</option>
-              <option value="normal">普通</option>
-              <option value="high">高</option>
-            </select>
+          <!-- 通知方式选择 -->
+          <h4>通知方式</h4>
+          <div v-if="enabledChannels.length === 0" class="channel-hint">
+            <p>暂无已启用的通知渠道，请先到 <router-link to="/settings">设置页面</router-link> 配置通知方式。</p>
+          </div>
+          <div v-else class="channel-list">
+            <label v-if="enabledChannels.includes('notifyx')" class="channel-option">
+              <input type="checkbox" v-model="selectedChannels" value="notifyx" />
+              <span>NotifyX</span>
+            </label>
+            <label v-if="enabledChannels.includes('email')" class="channel-option">
+              <input type="checkbox" v-model="selectedChannels" value="email" />
+              <span>邮件通知</span>
+            </label>
+            <label v-if="enabledChannels.includes('webhook')" class="channel-option">
+              <input type="checkbox" v-model="selectedChannels" value="webhook" />
+              <span>Webhook</span>
+            </label>
           </div>
 
-          <h4>NotifyX配置</h4>
-
-          <div class="form-group">
-            <label for="apiKey">API密钥 *</label>
-            <input
-              id="apiKey"
-              v-model="notificationConfig.notifyxConfig.apiKey"
-              type="text"
-              placeholder="NotifyX API密钥"
-              required
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="channelId">频道ID *</label>
-            <input
-              id="channelId"
-              v-model="notificationConfig.notifyxConfig.channelId"
-              type="text"
-              placeholder="频道ID"
-              required
-            />
+          <!-- NotifyX 配置（仅在选择了 NotifyX 时显示） -->
+          <div v-if="selectedChannels.includes('notifyx')" class="channel-config-section">
+            <h4>NotifyX配置</h4>
+            <div class="form-group">
+              <label for="apiKey">API密钥 *</label>
+              <input
+                id="apiKey"
+                v-model="notificationConfig.notifyxConfig.apiKey"
+                type="text"
+                placeholder="NotifyX API密钥（留空则使用设置中的密钥）"
+              />
+              <small>如不填写，将使用设置页面中配置的 API 密钥</small>
+            </div>
           </div>
         </div>
 
@@ -179,8 +181,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useTasksStore } from '@/stores/tasks'
+import { settingsApi } from '@/api/client'
 import type { Task, TaskConfig, KeepaliveConfig, NotificationConfig } from '@/types'
 
 const props = defineProps<{
@@ -226,6 +229,20 @@ const notificationConfig = ref<NotificationConfig>({
 const headersJson = ref('')
 const loading = ref(false)
 const error = ref('')
+const enabledChannels = ref<string[]>([])
+const selectedChannels = ref<string[]>([])
+
+// 加载已启用的通知渠道
+onMounted(async () => {
+  try {
+    const response = await settingsApi.getEnabledChannels()
+    if (response.success && response.data) {
+      enabledChannels.value = response.data
+    }
+  } catch {
+    // 静默失败
+  }
+})
 
 // 如果是编辑模式，填充表单
 watch(
@@ -260,7 +277,7 @@ async function handleSubmit() {
   loading.value = true
 
   try {
-    // 构建配置
+    // 保存任务
     if (formData.value.type === 'keepalive') {
       // 解析headers JSON
       if (headersJson.value.trim()) {
@@ -276,6 +293,8 @@ async function handleSubmit() {
     } else {
       // 同步message到notifyxConfig
       notificationConfig.value.notifyxConfig.message = notificationConfig.value.message
+      // 将选中的通知渠道保存到配置中
+      ;(notificationConfig.value as any).channels = selectedChannels.value
       formData.value.config = notificationConfig.value
     }
 
@@ -463,5 +482,58 @@ async function handleSubmit() {
 .btn-submit:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.channel-hint {
+  padding: 0.75rem;
+  background: #fefcbf;
+  border-radius: 6px;
+  color: #744210;
+  font-size: 0.9rem;
+}
+
+.channel-hint a {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.channel-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.channel-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.channel-option:hover {
+  border-color: #667eea;
+  background: #f0f3ff;
+}
+
+.channel-option input[type='checkbox'] {
+  accent-color: #667eea;
+}
+
+.channel-config-section {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f7fafc;
+}
+
+.channel-config-section h4 {
+  margin: 0 0 1rem 0;
 }
 </style>

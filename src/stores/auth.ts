@@ -1,13 +1,13 @@
 // 认证状态管理
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { authApi } from '@/api/client'
+import { authApi, getAuthToken, clearAuthToken } from '@/api/client'
 import type { User, LoginCredentials } from '@/types'
 
 export const useAuthStore = defineStore('auth', () => {
   // 状态
   const user = ref<User | null>(null)
-  const token = ref<string | null>(null)
+  const token = ref<string | null>(getAuthToken())
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -68,11 +68,13 @@ export const useAuthStore = defineStore('auth', () => {
       } else {
         user.value = null
         token.value = null
+        clearAuthToken()
         return false
       }
     } catch {
       user.value = null
       token.value = null
+      clearAuthToken()
       return false
     } finally {
       loading.value = false
