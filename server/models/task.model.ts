@@ -1,4 +1,4 @@
-import { Task, KeepaliveConfig, NotificationConfig, NotifyXConfig } from '../types/index.js';
+import { Task, KeepaliveConfig, NotificationConfig } from '../types/index.js';
 
 /**
  * 任务模型类
@@ -112,16 +112,6 @@ export class TaskModel {
     if (config.title !== undefined) {
       if (typeof config.title !== 'string' || config.title.length > 100) {
         errors.push('通知标题必须是字符串且长度不超过100字符');
-      }
-    }
-
-    // 验证NotifyX配置
-    if (!config.notifyxConfig) {
-      errors.push('NotifyX配置不能为空');
-    } else {
-      const notifyxValidation = this.validateNotifyXConfig(config.notifyxConfig);
-      if (!notifyxValidation.valid) {
-        errors.push(...notifyxValidation.errors);
       }
     }
 

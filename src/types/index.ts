@@ -45,20 +45,9 @@ export interface KeepaliveConfig {
   executionRule?: ExecutionRule
 }
 
-export interface NotifyXConfig {
-  apiKey: string
-  channelId: string
-  message: string
-  title?: string
-  priority?: 'low' | 'normal' | 'high'
-  recipients?: string[]
-}
-
 export interface NotificationConfig {
   message: string
-  title?: string
-  priority?: 'low' | 'normal' | 'high'
-  notifyxConfig: NotifyXConfig
+  title: string
   executionRule?: ExecutionRule
 }
 

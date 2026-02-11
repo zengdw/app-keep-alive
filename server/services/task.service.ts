@@ -1,4 +1,4 @@
-import { Environment, Task, KeepaliveConfig, NotificationConfig, ExecutionResult, NotifyXConfig } from '../types/index.js';
+import { Environment, Task, KeepaliveConfig, NotificationConfig, ExecutionResult } from '../types/index.js';
 import { DatabaseUtils } from '../utils/database.js';
 import { TaskModel } from '../models/task.model.js';
 import { ExecutionLogModel } from '../models/execution-log.model.js';

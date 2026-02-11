@@ -10,13 +10,7 @@
         <!-- 基本信息 -->
         <div class="form-group">
           <label for="name">任务名称 *</label>
-          <input
-            id="name"
-            v-model="formData.name"
-            type="text"
-            placeholder="请输入任务名称"
-            required
-          />
+          <input id="name" v-model="formData.name" type="text" placeholder="请输入任务名称" required />
         </div>
 
         <div class="form-group">
@@ -43,50 +37,23 @@
 
         <div v-if="scheduleType === 'cron'" class="form-group">
           <label for="schedule">Cron 表达式 *</label>
-          <input
-            id="schedule"
-            v-model="formData.schedule"
-            type="text"
-            placeholder="例如: */5 * * * * (每5分钟)"
-            required
-          />
+          <input id="schedule" v-model="formData.schedule" type="text" placeholder="例如: */5 * * * * (每5分钟)" required />
           <small>格式: 秒 分 时 日 月 周</small>
         </div>
 
         <div v-if="scheduleType === 'periodic'" class="periodic-config">
-          <div class="form-row">
+          <!-- Row 1: Start Date, Interval Value, Interval Unit -->
+          <div class="form-row three-cols">
             <div class="form-group">
-              <label for="startDate">开始日期 *</label>
-              <input
-                id="startDate"
-                v-model="periodicConfig.startDate"
-                type="date"
-                required
-              />
+              <label for="startDate">开始日期</label>
+              <input id="startDate" v-model="periodicConfig.startDate" type="date" required />
             </div>
             <div class="form-group">
-              <label for="endDate">结束日期 (可选)</label>
-              <input
-                id="endDate"
-                v-model="periodicConfig.endDate"
-                type="date"
-              />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="interval">间隔数值 *</label>
-              <input
-                id="interval"
-                v-model.number="periodicConfig.interval"
-                type="number"
-                min="1"
-                required
-              />
+              <label for="interval">周期数值 *</label>
+              <input id="interval" v-model.number="periodicConfig.interval" type="number" min="1" required />
             </div>
             <div class="form-group">
-              <label for="unit">间隔单位 *</label>
+              <label for="unit">周期单位 *</label>
               <select id="unit" v-model="periodicConfig.unit" required>
                 <option value="day">天</option>
                 <option value="month">月</option>
@@ -95,43 +62,47 @@
             </div>
           </div>
 
+          <!-- Row 2: Due Date -->
           <div class="form-row">
-            <div class="form-group">
-              <label>提前提醒</label>
+            <div class="form-group half-width">
+              <label for="dueDate">到期日期 *</label>
+              <input id="dueDate" :value="calculatedDueDate" type="date" readonly class="readonly-input" />
+            </div>
+          </div>
+
+          <!-- Row 3: Reminder & Options -->
+          <div class="form-row end-aligned">
+            <!-- Reminder Section -->
+            <div class="form-group half-width">
+              <label>提醒提前量</label>
               <div class="input-group">
-                <input
-                  type="number"
-                  v-model.number="periodicConfig.reminderAdvanceValue"
-                  min="1"
-                  placeholder="数值"
-                  style="width: 80px"
-                />
-                <select
-                  v-model="periodicConfig.reminderAdvanceUnit"
-                  style="width: 80px"
-                >
+                <input type="number" v-model.number="periodicConfig.reminderAdvanceValue" min="0" placeholder="数值" />
+                <select v-model="periodicConfig.reminderAdvanceUnit">
                   <option value="hour">小时</option>
                   <option value="day">天</option>
                 </select>
               </div>
+              <small class="help-text">0 = 仅在到期时提醒; 选择"小时"需要将 Worker 定时任务调整为小时级执行</small>
             </div>
-            <div
-              class="form-group"
-              style="
-                justify-content: center;
-                align-items: center;
-                display: flex;
-              "
-            >
-              <label class="checkbox-label">
-                <input type="checkbox" v-model="periodicConfig.autoRenew" />
-                <span>自动续期</span>
-              </label>
+
+            <!-- Options Section -->
+            <div class="form-group options-group">
+              <label>选项设置</label>
+              <div class="checkbox-row">
+                <label class="checkbox-label">
+                  <input v-model="formData.enabled" type="checkbox" />
+                  <span>启用订阅</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" v-model="periodicConfig.autoRenew" />
+                  <span>自动续订</span>
+                </label>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" v-if="scheduleType !== 'periodic'">
           <label>
             <input v-model="formData.enabled" type="checkbox" />
             启用任务
@@ -144,13 +115,7 @@
 
           <div class="form-group">
             <label for="url">目标URL *</label>
-            <input
-              id="url"
-              v-model="keepaliveConfig.url"
-              type="url"
-              placeholder="https://example.com"
-              required
-            />
+            <input id="url" v-model="keepaliveConfig.url" type="url" placeholder="https://example.com" required />
           </div>
 
           <div class="form-group">
@@ -165,34 +130,18 @@
 
           <div class="form-group">
             <label for="timeout">超时时间 (秒) *</label>
-            <input
-              id="timeout"
-              v-model.number="keepaliveConfig.timeout"
-              type="number"
-              min="1"
-              max="300"
-              required
-            />
+            <input id="timeout" v-model.number="keepaliveConfig.timeout" type="number" min="1" max="300" required />
           </div>
 
           <div class="form-group">
             <label for="headers">请求头 (JSON格式)</label>
-            <textarea
-              id="headers"
-              v-model="headersJson"
-              placeholder='{"Content-Type": "application/json"}'
-              rows="3"
-            ></textarea>
+            <textarea id="headers" v-model="headersJson" placeholder='{"Content-Type": "application/json"}'
+              rows="3"></textarea>
           </div>
 
           <div class="form-group">
             <label for="body">请求体</label>
-            <textarea
-              id="body"
-              v-model="keepaliveConfig.body"
-              placeholder="请求体内容"
-              rows="3"
-            ></textarea>
+            <textarea id="body" v-model="keepaliveConfig.body" placeholder="请求体内容" rows="3"></textarea>
           </div>
         </div>
 
@@ -202,23 +151,12 @@
 
           <div class="form-group">
             <label for="title">通知标题</label>
-            <input
-              id="title"
-              v-model="notificationConfig.title"
-              type="text"
-              placeholder="通知标题"
-            />
+            <input id="title" v-model="notificationConfig.title" type="text" placeholder="通知标题" />
           </div>
 
           <div class="form-group">
             <label for="message">通知内容 *</label>
-            <textarea
-              id="message"
-              v-model="notificationConfig.message"
-              placeholder="通知内容"
-              rows="3"
-              required
-            ></textarea>
+            <textarea id="message" v-model="notificationConfig.message" placeholder="通知内容" rows="3" required></textarea>
           </div>
 
           <div class="channel-hint">
@@ -248,7 +186,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { useTasksStore } from "@/stores/tasks";
-import { settingsApi } from "@/api/client";
 import type {
   Task,
   TaskConfig,
@@ -288,12 +225,6 @@ const keepaliveConfig = ref<KeepaliveConfig>({
 const notificationConfig = ref<NotificationConfig>({
   message: "",
   title: "",
-  priority: "normal",
-  notifyxConfig: {
-    apiKey: "",
-    channelId: "",
-    message: "",
-  },
 });
 
 const headersJson = ref("");
@@ -310,9 +241,27 @@ const periodicConfig = ref({
   autoRenew: false,
 });
 
-// 初始化
-onMounted(async () => {
-  // 移除获取 channels 的调用，因为不再需要选择
+// 计算到期日期
+const calculatedDueDate = computed(() => {
+  if (!periodicConfig.value.startDate) return "";
+
+  const start = new Date(periodicConfig.value.startDate);
+  const interval = periodicConfig.value.interval || 0;
+  const unit = periodicConfig.value.unit;
+
+  if (isNaN(start.getTime())) return "";
+
+  const due = new Date(start);
+
+  if (unit === 'day') {
+    due.setDate(due.getDate() + interval);
+  } else if (unit === 'month') {
+    due.setMonth(due.getMonth() + interval);
+  } else if (unit === 'year') {
+    due.setFullYear(due.getFullYear() + interval);
+  }
+
+  return due.toISOString().split('T')[0];
 });
 
 // 如果是编辑模式，填充表单
@@ -334,9 +283,7 @@ watch(
         scheduleType.value = "periodic";
         periodicConfig.value = {
           startDate: config.executionRule.startDate.split("T")[0],
-          endDate: config.executionRule.endDate
-            ? config.executionRule.endDate.split("T")[0]
-            : "",
+          endDate: "", // End Date is no longer used in UI
           interval: config.executionRule.interval,
           unit: config.executionRule.unit,
           reminderAdvanceValue: config.executionRule.reminderAdvanceValue,
@@ -397,19 +344,6 @@ async function handleSubmit() {
       }
       formData.value.config = keepaliveConfig.value;
     } else {
-      // 同步message到notifyxConfig (Backend relies on message property, notifyxConfig might be legacy or used for different structure)
-      // We ensure notifyxConfig exists to satisfy type definition
-      if (!notificationConfig.value.notifyxConfig) {
-        notificationConfig.value.notifyxConfig = {
-          apiKey: "",
-          message: "",
-          channelId: "",
-        };
-      }
-      notificationConfig.value.notifyxConfig.message =
-        notificationConfig.value.message;
-      // notifyxConfig.apiKey is no longer used from here
-
       formData.value.config = notificationConfig.value;
     }
 
@@ -425,9 +359,7 @@ async function handleSubmit() {
         startDate: new Date(
           periodicConfig.value.startDate as string,
         ).toISOString(),
-        endDate: periodicConfig.value.endDate
-          ? new Date(periodicConfig.value.endDate as string).toISOString()
-          : undefined,
+        endDate: undefined, // End Date removed
         reminderAdvanceValue: periodicConfig.value.reminderAdvanceValue,
         reminderAdvanceUnit: periodicConfig.value.reminderAdvanceUnit,
         autoRenew: periodicConfig.value.autoRenew,
@@ -540,6 +472,7 @@ async function handleSubmit() {
 .form-group input[type="text"],
 .form-group input[type="url"],
 .form-group input[type="number"],
+.form-group input[type="date"],
 .form-group select,
 .form-group textarea {
   width: 100%;
@@ -710,5 +643,75 @@ async function handleSubmit() {
 .form-row .form-group {
   flex: 1;
   margin-bottom: 0;
+}
+
+.input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.input-group input,
+.input-group select {
+  flex: 1;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding-top: 1.5rem;
+  /* Align with input label */
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.readonly-input {
+  background-color: #f7fafc;
+  cursor: not-allowed;
+  color: #718096;
+}
+
+.three-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
+.half-width {
+  width: 50%;
+  flex: 0 0 auto !important;
+  /* Override flex: 1 from .form-row .form-group */
+}
+
+.end-aligned {
+  align-items: flex-start;
+}
+
+.options-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-left: 1rem;
+}
+
+.checkbox-row {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.help-text {
+  font-size: 0.75rem;
+  color: #718096;
+  margin-top: 0.25rem;
+  line-height: 1.4;
 }
 </style>

@@ -41,8 +41,7 @@ export interface KeepaliveConfig {
 
 export interface NotificationConfig {
   message: string;
-  title?: string;
-  notifyxConfig: NotifyXConfig;
+  title: string;
   executionRule?: ExecutionRule;
 }
 
