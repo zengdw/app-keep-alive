@@ -153,6 +153,8 @@ export interface NotificationSettings {
   emailEnabled: boolean
   emailAddress?: string
   emailApiKey?: string
+  emailFrom?: string
+  emailName?: string
   webhookEnabled: boolean
   webhookUrl?: string
   notifyxEnabled: boolean

@@ -101,6 +101,16 @@
                 <label for="emailAddress">接收邮箱</label>
                 <input id="emailAddress" v-model="notifForm.emailAddress" type="email" placeholder="接收通知的邮箱地址" />
               </div>
+              <div class="form-row two-cols">
+                <div class="form-group">
+                  <label for="emailFrom">发件人邮箱</label>
+                  <input id="emailFrom" v-model="notifForm.emailFrom" type="email" placeholder="必须是已在Resend验证的域名邮箱" />
+                </div>
+                <div class="form-group">
+                  <label for="emailName">发件人名称</label>
+                  <input id="emailName" v-model="notifForm.emailName" type="text" placeholder="显示在邮件中的发件人名称" />
+                </div>
+              </div>
               <div class="form-group">
                 <label for="emailApiKey">Resend API Key</label>
                 <input id="emailApiKey" v-model="notifForm.emailApiKey" type="password"
@@ -173,6 +183,8 @@ const notifForm = ref({
   emailEnabled: false,
   emailAddress: "",
   emailApiKey: "",
+  emailFrom: "",
+  emailName: "",
   webhookEnabled: false,
   webhookUrl: "",
   notifyxEnabled: false,
@@ -193,16 +205,14 @@ async function loadNotificationSettings() {
   notifLoading.value = false;
 
   if (settingsStore.notificationSettings) {
-    const s = settingsStore.notificationSettings as any; // Cast to any if potential type mismatch with snake_case API response
-    // Assuming store might hold snake_case from API, but let's check.
-    // If frontend types are camelCase, but API returns snake_case, we need to know what store holds.
-    // Based on previous code `s.email_enabled`, it seems store holds snake_case or type was snake_case.
-    // Let's assume store holds what API returns (mostly snake_case) but we map to camelCase for form.
+    const s = settingsStore.notificationSettings as any;
     notifForm.value = {
       allowedTimeSlots: s.allowed_time_slots || "",
       emailEnabled: Boolean(s.email_enabled || s.emailEnabled),
       emailAddress: s.email_address || s.emailAddress || "",
       emailApiKey: s.email_api_key || s.emailApiKey || "",
+      emailFrom: s.email_from || s.emailFrom || "",
+      emailName: s.email_name || s.emailName || "",
       webhookEnabled: Boolean(s.webhook_enabled || s.webhookEnabled),
       webhookUrl: s.webhook_url || s.webhookUrl || "",
       notifyxEnabled: Boolean(s.notifyx_enabled || s.notifyxEnabled),
@@ -247,13 +257,13 @@ async function handleSaveNotifications() {
   notifError.value = "";
   notifSuccess.value = "";
 
-  // Convert back to snake_case for API/Store if needed
-  // Using 'any' to bypass type check for now to ensure keys match what backend expects
   const payload: any = {
     allowed_time_slots: notifForm.value.allowedTimeSlots,
     email_enabled: notifForm.value.emailEnabled,
     email_address: notifForm.value.emailAddress,
     email_api_key: notifForm.value.emailApiKey,
+    email_from: notifForm.value.emailFrom,
+    email_name: notifForm.value.emailName,
     webhook_enabled: notifForm.value.webhookEnabled,
     webhook_url: notifForm.value.webhookUrl,
     notifyx_enabled: notifForm.value.notifyxEnabled,
@@ -495,5 +505,14 @@ async function handleTestChannel(channel: "email" | "webhook" | "notifyx") {
   cursor: not-allowed;
   border-color: #cbd5e0;
   color: #a0aec0;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-row.two-cols>.form-group {
+  flex: 1;
 }
 </style>

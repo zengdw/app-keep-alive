@@ -43,16 +43,16 @@ export class DatabaseUtils {
       return { success: true, data };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知错误';
-      
+
       if (retries > 0) {
         // 等待后重试
         await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY));
         return this.executeWithRetry(operation, retries - 1);
       }
-      
-      return { 
-        success: false, 
-        error: `数据库操作失败（已重试${this.MAX_RETRIES}次）: ${errorMessage}` 
+
+      return {
+        success: false,
+        error: `数据库操作失败（已重试${this.MAX_RETRIES}次）: ${errorMessage}`
       };
     }
   }
@@ -66,9 +66,9 @@ export class DatabaseUtils {
       await env.DB.prepare('SELECT 1 as test').first();
       return true;
     });
-    
-    return result.success 
-      ? { success: true } 
+
+    return result.success
+      ? { success: true }
       : { success: false, error: result.error };
   }
 
@@ -99,7 +99,7 @@ export class DatabaseUtils {
         data.created_at,
         data.updated_at
       ).run();
-      
+
       return user;
     });
   }
@@ -115,7 +115,7 @@ export class DatabaseUtils {
       const row = await env.DB.prepare(
         'SELECT * FROM users WHERE id = ?'
       ).bind(id).first();
-      
+
       return row ? UserModel.fromDatabaseRow(row) : null;
     });
   }
@@ -131,7 +131,7 @@ export class DatabaseUtils {
       const row = await env.DB.prepare(
         'SELECT * FROM users WHERE username = ?'
       ).bind(username).first();
-      
+
       return row ? UserModel.fromDatabaseRow(row) : null;
     });
   }
@@ -233,7 +233,7 @@ export class DatabaseUtils {
         data.last_executed,
         data.last_status
       ).run();
-      
+
       return task;
     });
   }
@@ -249,7 +249,7 @@ export class DatabaseUtils {
       const row = await env.DB.prepare(
         'SELECT * FROM tasks WHERE id = ?'
       ).bind(id).first();
-      
+
       return row ? TaskModel.fromDatabaseRow(row) : null;
     });
   }
@@ -287,7 +287,7 @@ export class DatabaseUtils {
       query += ' ORDER BY created_at DESC';
 
       const stmt = env.DB.prepare(query);
-      const result = bindings.length > 0 
+      const result = bindings.length > 0
         ? await stmt.bind(...bindings).all()
         : await stmt.all();
 
@@ -391,7 +391,7 @@ export class DatabaseUtils {
         data.error_message,
         data.details
       ).run();
-      
+
       return log;
     });
   }
@@ -407,7 +407,7 @@ export class DatabaseUtils {
       const row = await env.DB.prepare(
         'SELECT * FROM execution_logs WHERE id = ?'
       ).bind(id).first();
-      
+
       return row ? ExecutionLogModel.fromDatabaseRow(row) : null;
     });
   }
@@ -421,8 +421,8 @@ export class DatabaseUtils {
    * @returns 操作结果
    */
   static async getExecutionLogsByTaskId(
-    env: Environment, 
-    taskId: string, 
+    env: Environment,
+    taskId: string,
     limit: number = 100,
     offset: number = 0
   ): Promise<DatabaseResult<ExecutionLog[]>> {
@@ -430,7 +430,7 @@ export class DatabaseUtils {
       const result = await env.DB.prepare(
         'SELECT * FROM execution_logs WHERE task_id = ? ORDER BY execution_time DESC LIMIT ? OFFSET ?'
       ).bind(taskId, limit, offset).all();
-      
+
       return result.results.map(row => ExecutionLogModel.fromDatabaseRow(row));
     });
   }
@@ -451,7 +451,7 @@ export class DatabaseUtils {
       const result = await env.DB.prepare(
         'SELECT * FROM execution_logs ORDER BY execution_time DESC LIMIT ? OFFSET ?'
       ).bind(limit, offset).all();
-      
+
       return result.results.map(row => ExecutionLogModel.fromDatabaseRow(row));
     });
   }
@@ -507,7 +507,7 @@ export class DatabaseUtils {
       }
 
       const stmt = env.DB.prepare(query);
-      const result = bindings.length > 0 
+      const result = bindings.length > 0
         ? await stmt.bind(...bindings).all()
         : await stmt.all();
 
@@ -526,7 +526,7 @@ export class DatabaseUtils {
       const result = await env.DB.prepare(
         'DELETE FROM execution_logs WHERE execution_time < ?'
       ).bind(beforeDate).run();
-      
+
       return result.meta.changes || 0;
     });
   }
@@ -540,7 +540,7 @@ export class DatabaseUtils {
    * @returns 操作结果
    */
   static async createNotificationSettings(
-    env: Environment, 
+    env: Environment,
     settings: NotificationSettings
   ): Promise<DatabaseResult<NotificationSettings>> {
     // 验证通知设置数据
@@ -554,8 +554,8 @@ export class DatabaseUtils {
       await env.DB.prepare(
         `INSERT INTO notification_settings 
          (id, user_id, email_enabled, email_address, email_api_key, webhook_enabled, webhook_url, 
-          notifyx_enabled, notifyx_api_key, failure_threshold, created_at, updated_at) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          notifyx_enabled, notifyx_api_key, failure_threshold, email_from, email_name, allowed_time_slots, created_at, updated_at) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).bind(
         data.id,
         data.user_id,
@@ -567,10 +567,13 @@ export class DatabaseUtils {
         data.notifyx_enabled,
         data.notifyx_api_key,
         data.failure_threshold,
+        data.email_from,
+        data.email_name,
+        data.allowed_time_slots,
         data.created_at,
         data.updated_at
       ).run();
-      
+
       return settings;
     });
   }
@@ -582,14 +585,14 @@ export class DatabaseUtils {
    * @returns 操作结果
    */
   static async getNotificationSettingsByUserId(
-    env: Environment, 
+    env: Environment,
     userId: string
   ): Promise<DatabaseResult<NotificationSettings | null>> {
     return this.executeWithRetry(async () => {
       const row = await env.DB.prepare(
         'SELECT * FROM notification_settings WHERE user_id = ?'
       ).bind(userId).first();
-      
+
       return row ? NotificationSettingsModel.fromDatabaseRow(row) : null;
     });
   }
@@ -602,8 +605,8 @@ export class DatabaseUtils {
    * @returns 操作结果
    */
   static async updateNotificationSettings(
-    env: Environment, 
-    userId: string, 
+    env: Environment,
+    userId: string,
     updateData: Partial<NotificationSettings>
   ): Promise<DatabaseResult<NotificationSettings>> {
     // 验证更新数据
@@ -629,7 +632,7 @@ export class DatabaseUtils {
          SET email_enabled = ?, email_address = ?, email_api_key = ?,
              webhook_enabled = ?, webhook_url = ?, 
              notifyx_enabled = ?, notifyx_api_key = ?,
-             failure_threshold = ?, updated_at = ? 
+             failure_threshold = ?, email_from = ?, email_name = ?, allowed_time_slots = ?, updated_at = ? 
          WHERE user_id = ?`
       ).bind(
         data.email_enabled,
@@ -640,6 +643,9 @@ export class DatabaseUtils {
         data.notifyx_enabled,
         data.notifyx_api_key,
         data.failure_threshold,
+        data.email_from,
+        data.email_name,
+        data.allowed_time_slots,
         data.updated_at,
         userId
       ).run();
@@ -718,10 +724,10 @@ export class DatabaseUtils {
       const indexResult = await env.DB.prepare(
         'SELECT name FROM sqlite_master WHERE type="index" AND name LIKE "idx_%"'
       ).all();
-      
+
       const expectedIndexes = [
         'idx_tasks_type',
-        'idx_tasks_enabled', 
+        'idx_tasks_enabled',
         'idx_tasks_created_by',
         'idx_execution_logs_task_id',
         'idx_execution_logs_execution_time',
@@ -729,7 +735,7 @@ export class DatabaseUtils {
       ];
 
       const existingIndexes = indexResult.results.map((row: any) => row.name);
-      
+
       for (const expectedIndex of expectedIndexes) {
         if (!existingIndexes.includes(expectedIndex)) {
           errors.push(`索引 ${expectedIndex} 不存在`);

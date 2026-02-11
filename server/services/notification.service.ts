@@ -55,12 +55,14 @@ export class NotificationService {
       }
 
       // 发送邮件通知
-      if (settings.email_enabled && settings.email_address && settings.email_api_key) {
+      if (settings.email_enabled && settings.email_address && settings.email_api_key && settings.email_from && settings.email_name) {
         const emailResult = await this.sendEmailNotification(
           settings.email_address,
           title,
           message,
-          settings.email_api_key
+          settings.email_api_key,
+          settings.email_from,
+          settings.email_name
         );
         results.push(emailResult.success);
         if (!emailResult.success) {
@@ -125,8 +127,15 @@ export class NotificationService {
         return result;
       }
       if (channel === 'email') {
-        if (!settings.email_enabled || !settings.email_address || !settings.email_api_key) return { success: false, error: '邮件通知未启用或未配置' };
-        const result = await this.sendEmailNotification(settings.email_address, title, message, settings.email_api_key);
+        if (!settings.email_enabled || !settings.email_address || !settings.email_api_key || !settings.email_from || !settings.email_name) return { success: false, error: '邮件通知未启用或未配置' };
+        const result = await this.sendEmailNotification(
+          settings.email_address,
+          title,
+          message,
+          settings.email_api_key,
+          settings.email_from,
+          settings.email_name
+        );
         return result;
       }
       if (channel === 'webhook') {
@@ -156,48 +165,6 @@ export class NotificationService {
     success: boolean;
     error?: string;
   }> {
-    try {
-      // 验证配置
-      const validation = this.validateNotifyXConfig(config);
-      if (!validation.valid) {
-        return {
-          success: false,
-          error: `NotifyX配置无效: ${validation.errors.join(', ')}`
-        };
-      }
-
-      // 发送请求到NotifyX API
-      const response = await fetch(`https://www.notifyx.cn/api/v1/send/${config.apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: config.title || '系统通知',
-          content: config.message,
-        }),
-        signal: AbortSignal.timeout(30000)
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        return {
-          success: false,
-          error: `NotifyX API错误: HTTP ${response.status} - ${errorText}`
-        };
-      }
-
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: `发送NotifyX消息失败: ${error instanceof Error ? error.message : '未知错误'}`
-      };
-    }
-  }
-
-  /**
-   * 发送NotifyX消息
     try {
       // 验证配置
       const validation = this.validateNotifyXConfig(config);
@@ -470,7 +437,9 @@ export class NotificationService {
     email: string,
     subject: string,
     message: string,
-    apiKey: string
+    apiKey: string,
+    fromEmail: string,
+    fromName: string
   ): Promise<{
     success: boolean;
     error?: string;
@@ -478,8 +447,11 @@ export class NotificationService {
     try {
       // 使用 Resend 邮件服务发送邮件
       const resend = new Resend(apiKey);
+
+      const fromLabel = `${fromName} <${fromEmail}>`;
+
       const { data, error } = await resend.emails.send({
-        from: 'zengd <send@zengdw.dpdns.org>',
+        from: fromLabel,
         to: [email],
         subject,
         html: `<strong>${message}</strong>`,

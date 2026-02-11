@@ -77,6 +77,12 @@ export class SettingsRoutes {
 
             const body = await request.json() as Partial<NotificationSettings>;
 
+            // 验证输入数据
+            const validation = NotificationSettingsModel.validate(body);
+            if (!validation.valid) {
+                return ResponseUtils.error(validation.errors.join(', '), 400);
+            }
+
             // 检查是否已有设置
             const existingResult = await DatabaseUtils.getNotificationSettingsByUserId(env, user.id);
 
@@ -96,7 +102,10 @@ export class SettingsRoutes {
                     webhook_url: body.webhook_url,
                     notifyx_enabled: body.notifyx_enabled,
                     notifyx_api_key: body.notifyx_api_key,
-                    failure_threshold: body.failure_threshold
+                    failure_threshold: body.failure_threshold,
+                    email_from: body.email_from,
+                    email_name: body.email_name,
+                    allowed_time_slots: body.allowed_time_slots
                 });
                 result = await DatabaseUtils.createNotificationSettings(env, newSettings);
             }

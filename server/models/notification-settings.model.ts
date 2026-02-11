@@ -1,6 +1,11 @@
 import { NotificationSettings } from '../types/index.js';
 
 /**
+ * Valid email "from" address regex (simple check)
+ */
+const EMAIL_FROM_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
  * 通知设置模型类
  * 提供通知设置数据的验证和操作方法
  */
@@ -41,7 +46,31 @@ export class NotificationSettingsModel {
   }
 
   /**
-   * 验证Webhook URL
+   * 验证发件人邮箱
+   * @param email 发件人邮箱
+   * @returns 是否有效
+   */
+  static validateEmailFrom(email: string): boolean {
+    if (!email || typeof email !== 'string') {
+      return false;
+    }
+    return EMAIL_FROM_REGEX.test(email) && email.length <= 255;
+  }
+
+  /**
+   * 验证发件人名称
+   * @param name 发件人名称
+   * @returns 是否有效
+   */
+  static validateEmailName(name: string): boolean {
+    if (!name || typeof name !== 'string') {
+      return false;
+    }
+    return name.trim().length > 0 && name.length <= 100;
+  }
+
+  /**
+   * 验证Hook Webhook URL
    * @param url Webhook URL
    * @returns 是否有效
    */
@@ -99,11 +128,23 @@ export class NotificationSettingsModel {
       } else if (!this.validateEmail(settingsData.email_address)) {
         errors.push('邮箱地址格式无效');
       }
-      
+
       if (!settingsData.email_api_key) {
         errors.push('启用邮件通知时必须提供邮件 API 密钥');
       } else if (!this.validateEmailApiKey(settingsData.email_api_key)) {
         errors.push('邮件 API 密钥格式无效');
+      }
+
+      if (!settingsData.email_from) {
+        errors.push('启用邮件通知时必须提供发件人邮箱');
+      } else if (!this.validateEmailFrom(settingsData.email_from)) {
+        errors.push('发件人邮箱格式无效');
+      }
+
+      if (!settingsData.email_name) {
+        errors.push('启用邮件通知时必须提供发件人名称');
+      } else if (!this.validateEmailName(settingsData.email_name)) {
+        errors.push('发件人名称格式无效');
       }
     }
 
@@ -153,6 +194,9 @@ export class NotificationSettingsModel {
     notifyx_api_key?: string;
     notifyx_channel_id?: string;
     failure_threshold?: number;
+    email_from?: string;
+    email_name?: string;
+    allowed_time_slots?: string;
   }): NotificationSettings {
     const now = new Date().toISOString();
     return {
@@ -166,6 +210,9 @@ export class NotificationSettingsModel {
       notifyx_enabled: settingsData.notifyx_enabled || false,
       notifyx_api_key: settingsData.notifyx_api_key,
       failure_threshold: settingsData.failure_threshold || 3,
+      email_from: settingsData.email_from,
+      email_name: settingsData.email_name,
+      allowed_time_slots: settingsData.allowed_time_slots,
       created_at: now,
       updated_at: now
     };
@@ -202,6 +249,9 @@ export class NotificationSettingsModel {
       notifyx_enabled: Boolean(row.notifyx_enabled),
       notifyx_api_key: row.notifyx_api_key || undefined,
       failure_threshold: row.failure_threshold,
+      email_from: row.email_from || undefined,
+      email_name: row.email_name || undefined,
+      allowed_time_slots: row.allowed_time_slots || undefined,
       created_at: row.created_at,
       updated_at: row.updated_at
     };
@@ -224,6 +274,9 @@ export class NotificationSettingsModel {
       notifyx_enabled: settings.notifyx_enabled ? 1 : 0,
       notifyx_api_key: settings.notifyx_api_key || null,
       failure_threshold: settings.failure_threshold,
+      email_from: settings.email_from || null,
+      email_name: settings.email_name || null,
+      allowed_time_slots: settings.allowed_time_slots || null,
       created_at: settings.created_at,
       updated_at: settings.updated_at
     };
@@ -236,8 +289,8 @@ export class NotificationSettingsModel {
    * @returns 是否需要发送通知
    */
   static shouldSendNotification(settings: NotificationSettings, failureCount: number): boolean {
-    return failureCount >= settings.failure_threshold && 
-           (settings.email_enabled || settings.webhook_enabled || settings.notifyx_enabled);
+    return failureCount >= settings.failure_threshold &&
+      (settings.email_enabled || settings.webhook_enabled || settings.notifyx_enabled);
   }
 
   /**
@@ -247,19 +300,19 @@ export class NotificationSettingsModel {
    */
   static getAvailableChannels(settings: NotificationSettings): string[] {
     const channels: string[] = [];
-    
+
     if (settings.email_enabled && settings.email_address && settings.email_api_key) {
       channels.push('email');
     }
-    
+
     if (settings.webhook_enabled && settings.webhook_url) {
       channels.push('webhook');
     }
-    
+
     if (settings.notifyx_enabled && settings.notifyx_api_key) {
       channels.push('notifyx');
     }
-    
+
     return channels;
   }
 }

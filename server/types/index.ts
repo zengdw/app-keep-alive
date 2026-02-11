@@ -84,8 +84,10 @@ export interface NotificationSettings {
   id: string;
   user_id: string;
   email_enabled: boolean;
-  email_address?: string;
-  email_api_key?: string;
+  email_from?: string; // 发件人
+  email_name?: string; // 发件人名称
+  email_address?: string; // 收件人
+  email_api_key?: string; // SMTP API密钥
   webhook_enabled: boolean;
   webhook_url?: string;
   notifyx_enabled: boolean;
