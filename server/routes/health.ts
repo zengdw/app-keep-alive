@@ -61,7 +61,7 @@ export class HealthRoutes {
   static async check(request: Request, env: Environment): Promise<Response> {
     try {
       const healthCheck = await DatabaseUtils.healthCheck(env);
-      
+
       const response: ApiResponse = {
         success: healthCheck.healthy,
         data: {
@@ -93,10 +93,10 @@ export class HealthRoutes {
     try {
       // 收集系统指标
       const metrics = await this.collectSystemMetrics(env);
-      
+
       // 检测异常
       const anomalies = await this.detectAnomalies(env, metrics);
-      
+
       // 如果有严重异常，触发通知
       if (anomalies.length > 0) {
         await this.notifyAnomalies(env, anomalies);
@@ -107,8 +107,8 @@ export class HealthRoutes {
         data: {
           ...metrics,
           anomalies: anomalies.length > 0 ? anomalies : undefined,
-          health: anomalies.some(a => a.severity === 'critical') ? 'critical' : 
-                  anomalies.some(a => a.severity === 'high') ? 'degraded' : 'healthy'
+          health: anomalies.some(a => a.severity === 'critical') ? 'critical' :
+            anomalies.some(a => a.severity === 'high') ? 'degraded' : 'healthy'
         }
       };
 
@@ -168,7 +168,7 @@ export class HealthRoutes {
     // 获取任务统计
     const tasksResult = await DatabaseUtils.getAllTasks(env);
     const tasks = tasksResult.data || [];
-    
+
     const activeTasks = tasks.filter(t => t.enabled).length;
     const inactiveTasks = tasks.filter(t => !t.enabled).length;
     const totalTasks = tasks.length;
@@ -178,24 +178,24 @@ export class HealthRoutes {
     // 获取执行日志统计
     const now = new Date();
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    
+
     const allLogsResult = await DatabaseUtils.getAllExecutionLogs(env, 1000);
     const allLogs = allLogsResult.data || [];
-    
-    const last24hLogs = allLogs.filter(log => 
+
+    const last24hLogs = allLogs.filter(log =>
       new Date(log.execution_time) >= yesterday
     );
-    
+
     const successCount = last24hLogs.filter(l => l.status === 'success').length;
-    const successRate = last24hLogs.length > 0 
-      ? (successCount / last24hLogs.length) * 100 
+    const successRate = last24hLogs.length > 0
+      ? (successCount / last24hLogs.length) * 100
       : 100;
-    
+
     // 计算平均响应时间
     const responseTimes = last24hLogs
       .filter(log => log.response_time !== undefined && log.response_time !== null)
       .map(log => log.response_time!);
-    
+
     const averageResponseTime = responseTimes.length > 0
       ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
       : 0;
@@ -203,11 +203,14 @@ export class HealthRoutes {
     // 获取数据库健康状态
     const healthCheck = await DatabaseUtils.healthCheck(env);
 
+    // 获取总执行次数（仅统计执行日志）
+    const totalExecutions = await DatabaseUtils.getTotalExecutionLogsCount(env);
+
     // 获取错误日志统计
     const errorLogsResult = await LogService.getErrorLogs(env, 100);
     const errorLogs = errorLogsResult.data || [];
-    
-    const last24hErrors = errorLogs.filter(log => 
+
+    const last24hErrors = errorLogs.filter(log =>
       new Date(log.timestamp) >= yesterday
     );
 
@@ -231,7 +234,7 @@ export class HealthRoutes {
         notification: notificationTasks
       },
       executions: {
-        total: allLogs.length,
+        total: totalExecutions,
         last24h: last24hLogs.length,
         successRate: Math.round(successRate * 100) / 100,
         averageResponseTime: Math.round(averageResponseTime)
@@ -251,7 +254,7 @@ export class HealthRoutes {
    * 检测系统异常
    */
   private static async detectAnomalies(
-    env: Environment, 
+    env: Environment,
     metrics: SystemMetrics
   ): Promise<AnomalyInfo[]> {
     const anomalies: AnomalyInfo[] = [];
@@ -361,7 +364,7 @@ export class HealthRoutes {
       }
 
       // 构建通知消息
-      const message = criticalAnomalies.map(a => 
+      const message = criticalAnomalies.map(a =>
         `[${a.severity.toUpperCase()}] ${a.message}`
       ).join('\n');
 

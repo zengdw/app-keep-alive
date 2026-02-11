@@ -16,8 +16,8 @@
           </div>
           <div class="card-content">
             <div class="card-label">系统状态</div>
-            <div class="card-value" :class="{ healthy: systemStore.status?.healthy }">
-              {{ systemStore.status?.healthy ? '正常' : '异常' }}
+            <div class="card-value" :class="{ healthy: systemStore.status?.health === 'healthy' }">
+              {{ systemStore.status?.health === 'healthy' ? '正常' : '异常' }}
             </div>
           </div>
         </div>
@@ -29,7 +29,7 @@
           <div class="card-content">
             <div class="card-label">活跃任务</div>
             <div class="card-value">
-              {{ systemStore.status?.activeTasksCount || 0 }}
+              {{ systemStore.status?.tasks?.active || 0 }}
             </div>
           </div>
         </div>
@@ -41,7 +41,7 @@
           <div class="card-content">
             <div class="card-label">总执行次数</div>
             <div class="card-value">
-              {{ systemStore.status?.totalExecutions || 0 }}
+              {{ systemStore.totalExecutions }}
             </div>
           </div>
         </div>
@@ -53,7 +53,7 @@
           <div class="card-content">
             <div class="card-label">成功率</div>
             <div class="card-value">
-              {{ (systemStore.status?.successRate || 0).toFixed(1) }}%
+              {{ (systemStore.status?.executions?.successRate || 0).toFixed(1) }}%
             </div>
           </div>
         </div>
@@ -222,7 +222,7 @@ async function refreshData() {
     await Promise.all([
       systemStore.fetchStatus(),
       tasksStore.fetchTasks(),
-      logsStore.fetchLogs({ limit: 10 })
+      logsStore.fetchLogs({ limit: 10, logType: 'execution' })
     ])
   } finally {
     loading.value = false

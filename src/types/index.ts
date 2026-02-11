@@ -107,13 +107,41 @@ export interface LogFilter {
   offset?: number
 }
 
-// 系统状态相关类型
 export interface SystemStatus {
-  healthy: boolean
-  activeTasksCount: number
-  totalExecutions: number
-  successRate: number
-  lastExecutionTime?: string
+  timestamp: string
+  uptime: number
+  tasks: {
+    total: number
+    active: number
+    inactive: number
+    keepalive: number
+    notification: number
+  }
+  executions: {
+    total: number
+    last24h: number
+    successRate: number
+    averageResponseTime: number
+  }
+  database: {
+    healthy: boolean
+    tables: Record<string, number>
+  }
+  errors: {
+    last24h: number
+    recentErrors: Array<{
+      code: string
+      message: string
+      timestamp: string
+    }>
+  }
+  anomalies?: Array<{
+    type: string
+    severity: string
+    message: string
+    timestamp: string
+  }>
+  health: 'healthy' | 'degraded' | 'critical'
 }
 
 // API响应类型

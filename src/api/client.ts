@@ -213,7 +213,7 @@ export const logApi = {
 export const systemApi = {
   // 获取系统状态
   async getStatus(): Promise<ApiResponse<SystemStatus>> {
-    return request<SystemStatus>('/health')
+    return request<SystemStatus>('/status')
   }
 }
 

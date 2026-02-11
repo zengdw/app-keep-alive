@@ -1,6 +1,5 @@
-// 系统状态管理
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { systemApi } from '@/api/client'
 import type { SystemStatus } from '@/types'
 
@@ -35,11 +34,18 @@ export const useSystemStore = defineStore('system', () => {
     error.value = null
   }
 
+  // 计算属性
+  const totalExecutions = computed(() => {
+    return status.value?.executions?.total || 0
+  })
+
   return {
     // 状态
     status,
     loading,
     error,
+    // 计算属性
+    totalExecutions,
     // 方法
     fetchStatus,
     clearError
