@@ -27,7 +27,7 @@
 		{
 			"binding": "DB",
 			"database_name": "stms-db",
-			"database_id": "YOUR_STAGING_DATABASE_ID",
+			"database_id": "",
 			"remote": false
 		}
 	],
@@ -40,7 +40,7 @@
 	// - "0 * * * *" - 每小时
 	"triggers": {
 		"crons": [
-			"*/5 * * * *"
+			"0 * * * *"
 		]
 	},
 	// Environment Variables
@@ -58,46 +58,20 @@
 	"vars": {
 		"ENVIRONMENT": "development"
 	},
-	// 生产环境配置
-	// 使用 wrangler deploy --env production 部署到生产环境
 	"env": {
 		"production": {
-			"name": "stms",
+			"name": "stms-production",
 			"vars": {
 				"ENVIRONMENT": "production"
 			},
 			"d1_databases": [
 				{
 					"binding": "DB",
-					"database_name": "stms-db-production",
-					"database_id": "4f10a6e7-9840-489b-a988-85f7d824dfed",
-					"remote": true,
-				}
-			],
-			"triggers": {
-				"crons": [
-					"0 * * * *"
-				]
-			}
-		},
-		"staging": {
-			"name": "stms-staging",
-			"vars": {
-				"ENVIRONMENT": "staging"
-			},
-			"d1_databases": [
-				{
-					"binding": "DB",
-					"database_name": "stms-db-staging",
-					"database_id": "YOUR_STAGING_DATABASE_ID",
+					"database_name": "stms-db",
+					"database_id": "cc0569a9-26e7-4da1-b307-30b3fdd0e799",
 					"remote": true
 				}
-			],
-			"triggers": {
-				"crons": [
-					"0 * * * *"
-				]
-			}
+			]
 		}
 	}
 }
