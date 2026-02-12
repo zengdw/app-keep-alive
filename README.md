@@ -65,8 +65,7 @@
    # 同时启动前后端开发服务器
    pnpm run dev
    
-   # 或分别启动
-   pnpm run dev:frontend  # 前端: http://localhost:5173
+   # 仅启动后端
    pnpm run dev:backend   # 后端: http://localhost:8787
    ```
 
@@ -79,9 +78,6 @@
 ```bash
 # 启动开发服务器（前端 + 后端）
 pnpm run dev
-
-# 仅启动前端
-pnpm run dev:frontend
 
 # 仅启动后端
 pnpm run dev:backend
@@ -136,6 +132,9 @@ pnpm run db:migrate:staging
 
 # 查看本地数据库表
 pnpm run db:console
+
+# 查看生产数据库表
+pnpm run db:console:production
 ```
 
 ### 部署

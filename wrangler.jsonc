@@ -17,13 +17,17 @@
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
+	"route": {
+		"custom_domain": true,
+		"pattern": "stms.zengdw.dpdns.org"
+	},
 	// D1 Database Bindings
 	// https://developers.cloudflare.com/d1/
 	"d1_databases": [
 		{
 			"binding": "DB",
 			"database_name": "stms-db",
-			"database_id": "1f58195b-2d72-44dc-b2a4-259eab92b403",
+			"database_id": "YOUR_STAGING_DATABASE_ID",
 			"remote": false
 		}
 	],
@@ -58,7 +62,7 @@
 	// 使用 wrangler deploy --env production 部署到生产环境
 	"env": {
 		"production": {
-			"name": "stms-production",
+			"name": "stms",
 			"vars": {
 				"ENVIRONMENT": "production"
 			},
@@ -66,13 +70,13 @@
 				{
 					"binding": "DB",
 					"database_name": "stms-db-production",
-					"database_id": "1f58195b-2d72-44dc-b2a4-259eab92b403",
-					"remote": true
+					"database_id": "4f10a6e7-9840-489b-a988-85f7d824dfed",
+					"remote": true,
 				}
 			],
 			"triggers": {
 				"crons": [
-					"*/5 * * * *"
+					"0 * * * *"
 				]
 			}
 		},
@@ -91,7 +95,7 @@
 			],
 			"triggers": {
 				"crons": [
-					"*/5 * * * *"
+					"0 * * * *"
 				]
 			}
 		}
