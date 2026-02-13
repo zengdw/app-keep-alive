@@ -55,20 +55,18 @@ export interface Task {
   id: string
   name: string
   type: TaskType
-  schedule: string
   config: KeepaliveConfig | NotificationConfig
   enabled: boolean
   createdBy: string
   createdAt: string
   updatedAt: string
-  lastExecuted?: string
-  lastStatus?: TaskStatus
+  last_executed?: string
+  last_status?: TaskStatus
 }
 
 export interface TaskConfig {
   name: string
   type: TaskType
-  schedule: string
   config: KeepaliveConfig | NotificationConfig
   enabled: boolean
 }

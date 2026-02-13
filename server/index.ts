@@ -1,5 +1,5 @@
 import { Environment } from './types/index.js';
-import { CronService } from './services/cron.service.js';
+import { CronService } from './services/scheduled.service.js';
 import { staticRoutes, dynamicRoutes } from './routes/index.js';
 import { ResponseUtils } from './utils/response.js';
 import { RateLimitMiddleware } from './middleware/rate-limit.js';

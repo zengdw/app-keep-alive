@@ -55,7 +55,6 @@ export interface Task {
   id: string;
   name: string;
   type: 'keepalive' | 'notification';
-  schedule: string;
   config: KeepaliveConfig | NotificationConfig;
   enabled: boolean;
   created_by: string;

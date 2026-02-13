@@ -23,26 +23,9 @@
 
         <div class="form-group">
           <label>执行计划类型 *</label>
-          <div class="schedule-type-selector">
-            <label class="radio-label">
-              <input type="radio" v-model="scheduleType" value="cron" />
-              <span>Cron 表达式</span>
-            </label>
-            <label class="radio-label">
-              <input type="radio" v-model="scheduleType" value="periodic" />
-              <span>周期性执行</span>
-            </label>
-          </div>
         </div>
 
-        <div v-if="scheduleType === 'cron'" class="form-group">
-          <label for="schedule">Cron 表达式 *</label>
-          <input id="schedule" v-model="formData.schedule" type="text" placeholder="例如: */5 * * * * (每5分钟)" required />
-          <small>格式: 秒 分 时 日 月 周</small>
-          <small>Cron 以 UTC 计算，例如北京时间 08:00 (UTC 00:00) 需设置 Cron 为 <code>0 0 * * *</code></small>
-        </div>
-
-        <div v-if="scheduleType === 'periodic'" class="periodic-config">
+        <div class="periodic-config">
           <!-- Row 1: Start Date, Interval Value, Interval Unit -->
           <div class="form-row three-cols">
             <div class="form-group">
@@ -101,13 +84,6 @@
               </div>
             </div>
           </div>
-        </div>
-
-        <div class="form-group" v-if="scheduleType !== 'periodic'">
-          <label>
-            <input v-model="formData.enabled" type="checkbox" />
-            启用任务
-          </label>
         </div>
 
         <!-- 保活任务配置 -->
@@ -210,7 +186,6 @@ const isEdit = computed(() => !!props.task);
 const formData = ref<TaskConfig>({
   name: "",
   type: "keepalive",
-  schedule: "*/5 * * * *",
   enabled: true,
   config: {} as any,
 });
@@ -231,7 +206,6 @@ const notificationConfig = ref<NotificationConfig>({
 const headersJson = ref("");
 const loading = ref(false);
 const error = ref("");
-const scheduleType = ref<"cron" | "periodic">("cron");
 const periodicConfig = ref({
   startDate: new Date().toISOString().split("T")[0],
   endDate: "",
@@ -273,7 +247,6 @@ watch(
       formData.value = {
         name: task.name,
         type: task.type,
-        schedule: task.schedule,
         enabled: task.enabled,
         config: task.config,
       };
@@ -281,7 +254,6 @@ watch(
       // Check if executionRule exists
       const config = task.config as any;
       if (config.executionRule) {
-        scheduleType.value = "periodic";
         periodicConfig.value = {
           startDate: config.executionRule.startDate.split("T")[0],
           endDate: "", // End Date is no longer used in UI
@@ -292,8 +264,6 @@ watch(
             config.executionRule.reminderAdvanceUnit || "day",
           autoRenew: config.executionRule.autoRenew || false,
         };
-      } else {
-        scheduleType.value = "cron";
       }
 
       if (task.type === "keepalive") {
@@ -349,31 +319,22 @@ async function handleSubmit() {
     }
 
     // Handle Schedule Type
-    if (scheduleType.value === "periodic") {
-      // Set a default cron that runs frequently, e.g. every minute, so the aggressive filter passes it to the execution rule check
-      formData.value.schedule = "* * * * *";
+    // Set a default cron that runs frequently, e.g. every minute, so the aggressive filter passes it to the execution rule check
+    const rule = {
+      type: "interval" as const,
+      unit: periodicConfig.value.unit,
+      interval: periodicConfig.value.interval,
+      startDate: new Date(
+        periodicConfig.value.startDate as string,
+      ).toISOString(),
+      endDate: undefined, // End Date removed
+      reminderAdvanceValue: periodicConfig.value.reminderAdvanceValue,
+      reminderAdvanceUnit: periodicConfig.value.reminderAdvanceUnit,
+      autoRenew: periodicConfig.value.autoRenew,
+    };
 
-      const rule = {
-        type: "interval" as const,
-        unit: periodicConfig.value.unit,
-        interval: periodicConfig.value.interval,
-        startDate: new Date(
-          periodicConfig.value.startDate as string,
-        ).toISOString(),
-        endDate: undefined, // End Date removed
-        reminderAdvanceValue: periodicConfig.value.reminderAdvanceValue,
-        reminderAdvanceUnit: periodicConfig.value.reminderAdvanceUnit,
-        autoRenew: periodicConfig.value.autoRenew,
-      };
-
-      // Assign executionRule to config
-      (formData.value.config as any).executionRule = rule;
-    } else {
-      // Clear executionRule if switching back to cron
-      if ((formData.value.config as any).executionRule) {
-        delete (formData.value.config as any).executionRule;
-      }
-    }
+    // Assign executionRule to config
+    (formData.value.config as any).executionRule = rule;
 
     // 保存任务
     let success = false;

@@ -167,11 +167,6 @@ export class TaskModel {
       errors.push('任务类型必须是 keepalive 或 notification');
     }
 
-    // 验证调度表达式
-    if (taskData.schedule !== undefined && !this.validateSchedule(taskData.schedule)) {
-      errors.push('Cron表达式格式无效');
-    }
-
     // 验证配置
     if (taskData.config !== undefined && taskData.type !== undefined) {
       if (taskData.type === 'keepalive') {
@@ -207,7 +202,6 @@ export class TaskModel {
     id: string;
     name: string;
     type: 'keepalive' | 'notification';
-    schedule: string;
     config: KeepaliveConfig | NotificationConfig;
     created_by: string;
     enabled?: boolean;
@@ -217,7 +211,6 @@ export class TaskModel {
       id: taskData.id,
       name: taskData.name,
       type: taskData.type,
-      schedule: taskData.schedule,
       config: taskData.config,
       enabled: taskData.enabled !== undefined ? taskData.enabled : true,
       created_by: taskData.created_by,
@@ -250,7 +243,6 @@ export class TaskModel {
       id: row.id,
       name: row.name,
       type: row.type,
-      schedule: row.schedule,
       config: JSON.parse(row.config),
       enabled: Boolean(row.enabled),
       created_by: row.created_by,
@@ -271,7 +263,6 @@ export class TaskModel {
       id: task.id,
       name: task.name,
       type: task.type,
-      schedule: task.schedule,
       config: JSON.stringify(task.config),
       enabled: task.enabled ? 1 : 0,
       created_by: task.created_by,

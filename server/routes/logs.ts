@@ -1,6 +1,7 @@
 import { Environment, ApiResponse, LogFilter } from '../types/index.js';
 import { AuthService } from '../services/auth.service.js';
 import { LogService } from '../services/log.service.js';
+import { DatabaseUtils } from '../utils/database.js';
 
 /**
  * 日志路由处理器
@@ -59,7 +60,7 @@ export class LogRoutes {
       }
 
       // 转换字段格式为前端使用的 camelCase
-      const mappedData = (result.data || []).map(log => {
+      const mappedData = (result.data || []).map(async log => {
         let action: string | undefined;
         let resourceType: string | undefined;
 
@@ -74,11 +75,20 @@ export class LogRoutes {
           }
         }
 
+        let taskName, taskType
+        if (log.task_id) {
+          const task = await DatabaseUtils.getTaskById(env, log.task_id);
+          if (task.success) {
+            taskName = task.data?.name;
+            taskType = task.data?.type;
+          }
+        }
+
         return {
           id: log.id,
           taskId: log.task_id || '',
-          // taskName: '', // execution_logs 不包含 task_name，如果需要可以在这里查询或前端处理
-          // taskType: log.log_type === 'execution' ? ('keepalive' as const) : undefined, // 简单推断
+          taskName: taskName,
+          taskType: taskType,
           logType: log.log_type,
           action,
           resourceType,
@@ -93,7 +103,7 @@ export class LogRoutes {
 
       return new Response(JSON.stringify({
         success: true,
-        data: mappedData
+        data: await Promise.all(mappedData)
       } as ApiResponse), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }

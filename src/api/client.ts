@@ -157,6 +157,13 @@ export const taskApi = {
     })
   },
 
+  // 测试任务
+  async testTask(id: string): Promise<ApiResponse<void>> {
+    return request<void>(`/tasks/test/${id}`, {
+      method: 'GET'
+    })
+  },
+
   // 切换任务状态
   async toggleTask(id: string): Promise<ApiResponse<Task>> {
     return request<Task>(`/tasks/${id}/toggle`, {

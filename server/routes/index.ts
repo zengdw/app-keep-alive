@@ -46,7 +46,7 @@ export const dynamicRoutes: Array<[RegExp, string[], RouteHandler]> = [
     [/^\/api\/tasks\/([^/]+)$/, ['GET'], (req, env, id) => TaskRoutes.get(req, env, id)],
     [/^\/api\/tasks\/([^/]+)$/, ['PUT'], (req, env, id) => TaskRoutes.update(req, env, id)],
     [/^\/api\/tasks\/([^/]+)$/, ['DELETE'], (req, env, id) => TaskRoutes.delete(req, env, id)],
-    [/^\/api\/tasks\/([^/]+)\/toggle$/, ['POST'], (req, env, id) => TaskRoutes.toggle(req, env, id)],
     [/^\/api\/tasks\/([^/]+)\/statistics$/, ['GET'], (req, env, id) => TaskRoutes.statistics(req, env, id)],
     [/^\/api\/logs\/([^/]+)$/, ['GET'], (req, env, id) => LogRoutes.get(req, env, id)],
+    [/^\/api\/tasks\/test\/([^/]+)$/, ['GET'], (req, env, id) => TaskRoutes.test(req, env, id)],
 ];

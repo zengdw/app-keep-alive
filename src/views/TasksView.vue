@@ -28,12 +28,7 @@
         </div>
         <div class="filter-group">
           <label>搜索：</label>
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="搜索任务名称..."
-            @input="applyFilters"
-          />
+          <input v-model="searchQuery" type="text" placeholder="搜索任务名称..." @input="applyFilters" />
         </div>
       </div>
 
@@ -46,12 +41,8 @@
         暂无任务
       </div>
       <div v-else class="tasks-list">
-        <div
-          v-for="task in tasksStore.filteredTasks"
-          :key="task.id"
-          class="task-card"
-          :class="{ disabled: !task.enabled }"
-        >
+        <div v-for="task in tasksStore.filteredTasks" :key="task.id" class="task-card"
+          :class="{ disabled: !task.enabled }">
           <div class="task-header">
             <div class="task-info">
               <h3>{{ task.name }}</h3>
@@ -63,6 +54,7 @@
               </span>
             </div>
             <div class="task-actions">
+              <button @click="testTask(task)" class="btn-test">测试</button>
               <button @click="editTask(task)" class="btn-edit">编辑</button>
               <button @click="deleteTaskConfirm(task)" class="btn-delete">
                 删除
@@ -70,11 +62,6 @@
             </div>
           </div>
           <div class="task-details">
-            <div class="detail-item" v-if="!task.config?.executionRule">
-              <span class="label">执行计划：</span>
-              <span>{{ task.schedule }}</span>
-            </div>
-            
             <!-- Periodic Task Details -->
             <template v-if="task.config?.executionRule">
               <div class="detail-item">
@@ -83,25 +70,26 @@
               </div>
               <div class="detail-item">
                 <span class="label">到期日期：</span>
-                <span>{{ formatDate(task.config.executionRule.nextDueDate || calculateDueDate(task.config.executionRule)) }}</span>
+                <span>{{ formatDate(task.config.executionRule.nextDueDate ||
+                  calculateDueDate(task.config.executionRule)) }}</span>
               </div>
               <div class="detail-item" v-if="task.config.executionRule.reminderAdvanceValue !== undefined">
                 <span class="label">提前天数：</span>
                 <span>
-                  {{ task.config.executionRule.reminderAdvanceValue }} 
+                  {{ task.config.executionRule.reminderAdvanceValue }}
                   {{ task.config.executionRule.reminderAdvanceUnit === 'hour' ? '小时' : '天' }}
                 </span>
               </div>
             </template>
 
-            <div v-if="task.lastExecuted" class="detail-item">
+            <div v-if="task.last_executed" class="detail-item">
               <span class="label">最后执行：</span>
-              <span>{{ formatDateTime(task.lastExecuted) }}</span>
+              <span>{{ formatDateTime(task.last_executed) }}</span>
             </div>
-            <div v-if="task.lastStatus" class="detail-item">
+            <div v-if="task.last_status" class="detail-item">
               <span class="label">最后状态：</span>
-              <span class="status" :class="task.lastStatus">
-                {{ task.lastStatus === 'success' ? '成功' : '失败' }}
+              <span class="status" :class="task.last_status">
+                {{ task.last_status === 'success' ? '成功' : '失败' }}
               </span>
             </div>
           </div>
@@ -109,12 +97,8 @@
       </div>
 
       <!-- 创建/编辑任务模态框 -->
-      <TaskModal
-        v-if="showCreateModal || showEditModal"
-        :task="editingTask"
-        @close="closeModal"
-        @save="handleSaveTask"
-      />
+      <TaskModal v-if="showCreateModal || showEditModal" :task="editingTask" @close="closeModal"
+        @save="handleSaveTask" />
     </div>
   </AppLayout>
 </template>
@@ -148,10 +132,6 @@ function applyFilters() {
   })
 }
 
-async function toggleTaskStatus(task: Task) {
-  await tasksStore.toggleTask(task.id)
-}
-
 function editTask(task: Task) {
   editingTask.value = task
   showEditModal.value = true
@@ -161,6 +141,10 @@ async function deleteTaskConfirm(task: Task) {
   if (confirm(`确定要删除任务"${task.name}"吗？`)) {
     await tasksStore.deleteTask(task.id)
   }
+}
+
+async function testTask(task: Task) {
+  await tasksStore.testTask(task.id)
 }
 
 async function handleSaveTask() {
@@ -187,15 +171,15 @@ function formatDate(dateString: string): string {
 
 function calculateDueDate(rule: any): string {
   if (!rule.startDate) return ''
-  
+
   const start = new Date(rule.startDate)
   const interval = rule.interval || 0
   const unit = rule.unit
-  
+
   if (isNaN(start.getTime())) return ''
-  
+
   const due = new Date(start)
-  
+
   if (unit === 'day') {
     due.setDate(due.getDate() + interval)
   } else if (unit === 'month') {
@@ -203,7 +187,7 @@ function calculateDueDate(rule: any): string {
   } else if (unit === 'year') {
     due.setFullYear(due.getFullYear() + interval)
   }
-  
+
   return due.toISOString()
 }
 </script>
@@ -372,6 +356,7 @@ function calculateDueDate(rule: any): string {
 }
 
 .btn-edit,
+.btn-test,
 .btn-delete {
   padding: 0.5rem 1rem;
   border: none;
@@ -389,6 +374,15 @@ function calculateDueDate(rule: any): string {
 
 .btn-edit:hover {
   background: #3182ce;
+}
+
+.btn-test {
+  background: #715AB7;
+  color: white;
+}
+
+.btn-test:hover {
+  background: #5a4395;
 }
 
 .btn-delete {

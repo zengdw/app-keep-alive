@@ -27,13 +27,7 @@ export class TaskService {
    */
   static async createTask(
     env: Environment,
-    taskData: {
-      name: string;
-      type: 'keepalive' | 'notification';
-      schedule: string;
-      config: KeepaliveConfig | NotificationConfig;
-      enabled?: boolean;
-    },
+    taskData: Task,
     userId: string
   ): Promise<{ success: boolean; data?: Task; error?: string }> {
     try {
@@ -42,7 +36,6 @@ export class TaskService {
         id: this.generateId(),
         name: taskData.name,
         type: taskData.type,
-        schedule: taskData.schedule,
         config: taskData.config,
         created_by: userId,
         enabled: taskData.enabled !== undefined ? taskData.enabled : true
@@ -285,45 +278,26 @@ export class TaskService {
     }
   }
 
+
   /**
-   * 切换任务状态
+   * 执行单个任务
    * @param env 环境变量
-   * @param taskId 任务ID
-   * @param userId 用户ID
-   * @returns 更新后的任务
+   * @param task 任务对象
    */
-  static async toggleTaskStatus(
-    env: Environment,
-    taskId: string,
-    userId: string
-  ): Promise<{ success: boolean; data?: Task; error?: string }> {
+  static async executeTask(env: Environment, task: Task): Promise<void> {
+    console.log(`执行任务: ${task.name} (${task.type})`);
+
     try {
-      // 获取现有任务
-      const existingResult = await DatabaseUtils.getTaskById(env, taskId);
-
-      if (!existingResult.success || !existingResult.data) {
-        return { success: false, error: '任务不存在' };
+      if (task.type === 'keepalive') {
+        await this.executeKeepaliveTask(env, task);
+      } else if (task.type === 'notification') {
+        await this.executeNotificationTask(env, task);
+      } else {
+        throw new Error(`未知的任务类型: ${task.type}`);
       }
-
-      // 验证权限
-      if (existingResult.data.created_by !== userId) {
-        return { success: false, error: '无权限修改此任务' };
-      }
-
-      // 切换状态
-      const newEnabled = !existingResult.data.enabled;
-      const result = await DatabaseUtils.updateTask(env, taskId, { enabled: newEnabled });
-
-      if (!result.success) {
-        return { success: false, error: result.error };
-      }
-
-      return { success: true, data: result.data };
     } catch (error) {
-      return {
-        success: false,
-        error: `切换任务状态失败: ${error instanceof Error ? error.message : '未知错误'}`
-      };
+      console.error(`任务执行失败: ${task.name}`, error);
+      throw error;
     }
   }
 
@@ -457,6 +431,8 @@ export class TaskService {
 
       const config = task.config as NotificationConfig;
 
+      const message = this.buildMessage(task);
+
       // 获取任务创建者的通知设置
       const settingsResult = await DatabaseUtils.getNotificationSettingsByUserId(env, task.created_by);
 
@@ -467,10 +443,9 @@ export class TaskService {
       } else {
         // 调用通知服务发送通知
         result = await NotificationService.sendNotification(
-          env,
           settingsResult.data,
           config.title || '系统通知',
-          config.message,
+          message,
           {
             type: 'notification_task',
             task_id: task.id,
@@ -514,6 +489,9 @@ export class TaskService {
 
       await DatabaseUtils.updateTask(env, task.id, updateData);
 
+      // 处理通知
+      await this.handleTaskNotifications(env, task, executionResult);
+
       return executionResult;
     } catch (error) {
       const responseTime = Date.now() - startTime;
@@ -540,9 +518,63 @@ export class TaskService {
         last_executed: new Date().toISOString(),
         last_status: 'failure'
       });
+      // 处理通知
+      await this.handleTaskNotifications(env, task, executionResult);
 
       return executionResult;
     }
+  }
+
+  private static buildMessage(task: Task) {
+    const config = task.config as NotificationConfig;
+
+    // Calculate expiration status
+    let status = '';
+    if (config.executionRule?.endDate) {
+      const endDate = new Date(config.executionRule.endDate);
+      const now = new Date();
+      // Normalize to midnight to compare calendar days
+      const endMidnight = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      const diffTime = endMidnight.getTime() - nowMidnight.getTime();
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) {
+        status = '今天到期';
+      } else if (diffDays > 0) {
+        status = `将在${diffDays}天后到期`;
+      } else {
+        status = `已过期${Math.abs(diffDays)}天`;
+      }
+    }
+
+    const unit = config.executionRule?.unit;
+
+    let formattedEndDate = '';
+    if (config.executionRule?.endDate) {
+      const date = new Date(config.executionRule.endDate);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      formattedEndDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+
+    let message = `
+    📅 订阅到期提醒
+    
+    任务名称：${task.name}
+    到期日期：${formattedEndDate}
+    周期：${config.executionRule?.interval} ${unit == 'day' ? '天' : unit == 'month' ? '月' : '年'}
+    自动续期：${config.executionRule?.autoRenew ? '是' : '否'}
+    提醒策略：提前${config.executionRule?.reminderAdvanceValue}${config.executionRule?.reminderAdvanceUnit == 'day' ? '天' : '小时'}
+    到期状态: ${status}
+    备注：${config.message}
+    `;
+    return message;
   }
 
   /**
@@ -662,11 +694,6 @@ export class TaskService {
     result: ExecutionResult
   ): Promise<void> {
     try {
-      // 只对保活任务发送失败/恢复通知
-      if (task.type !== 'keepalive') {
-        return;
-      }
-
       if (!result.success) {
         // 任务失败，发送失败通知
         await NotificationService.sendFailureAlert(

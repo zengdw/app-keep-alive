@@ -14,7 +14,6 @@ export class NotificationService {
    * @returns 发送结果
    */
   static async sendNotification(
-    env: Environment,
     settings: NotificationSettings,
     title: string,
     message: string,
@@ -148,7 +147,6 @@ export class NotificationService {
 
     // Default: send to all enabled channels (existing logic via sendNotification)
     return this.sendNotification(
-      env,
       settings,
       title,
       message,
@@ -244,7 +242,7 @@ export class NotificationService {
       const message = this.buildFailureMessage(task, error, failureCount);
       const title = `任务失败通知: ${task.name}`;
 
-      return this.sendNotification(env, settings, title, message, {
+      return this.sendNotification(settings, title, message, {
         type: 'task_failure',
         task_id: task.id,
         task_name: task.name,
@@ -295,7 +293,7 @@ export class NotificationService {
       const message = this.buildRecoveryMessage(task);
       const title = `任务恢复通知: ${task.name}`;
 
-      return this.sendNotification(env, settings, title, message, {
+      return this.sendNotification(settings, title, message, {
         type: 'task_recovery',
         task_id: task.id,
         task_name: task.name,
@@ -454,7 +452,7 @@ export class NotificationService {
         from: fromLabel,
         to: [email],
         subject,
-        html: `<strong>${message}</strong>`,
+        html: `<pre>${message}</pre>`,
       });
 
       if (error) {

@@ -26,7 +26,7 @@ export const useTasksStore = defineStore('tasks', () => {
 
     if (filter.value.search) {
       const search = filter.value.search.toLowerCase()
-      result = result.filter(task => 
+      result = result.filter(task =>
         task.name.toLowerCase().includes(search)
       )
     }
@@ -34,19 +34,19 @@ export const useTasksStore = defineStore('tasks', () => {
     return result
   })
 
-  const keepaliveTasks = computed(() => 
+  const keepaliveTasks = computed(() =>
     tasks.value.filter(task => task.type === 'keepalive')
   )
 
-  const notificationTasks = computed(() => 
+  const notificationTasks = computed(() =>
     tasks.value.filter(task => task.type === 'notification')
   )
 
-  const enabledTasks = computed(() => 
+  const enabledTasks = computed(() =>
     tasks.value.filter(task => task.enabled)
   )
 
-  const disabledTasks = computed(() => 
+  const disabledTasks = computed(() =>
     tasks.value.filter(task => !task.enabled)
   )
 
@@ -168,29 +168,22 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   }
 
-  // 切换任务状态
-  async function toggleTask(id: string): Promise<boolean> {
+  // 测试任务
+  async function testTask(id: string): Promise<boolean> {
     loading.value = true
     error.value = null
 
     try {
-      const response = await taskApi.toggleTask(id)
+      const response = await taskApi.testTask(id)
 
-      if (response.success && response.data) {
-        const index = tasks.value.findIndex(t => t.id === id)
-        if (index !== -1) {
-          tasks.value[index] = response.data
-        }
-        if (currentTask.value?.id === id) {
-          currentTask.value = response.data
-        }
+      if (response.success) {
         return true
       } else {
-        error.value = response.error || '切换任务状态失败'
+        error.value = response.error || '测试任务失败'
         return false
       }
     } catch (err) {
-      error.value = err instanceof Error ? err.message : '切换任务状态失败'
+      error.value = err instanceof Error ? err.message : '测试任务失败'
       return false
     } finally {
       loading.value = false
@@ -236,7 +229,7 @@ export const useTasksStore = defineStore('tasks', () => {
     createTask,
     updateTask,
     deleteTask,
-    toggleTask,
+    testTask,
     setFilter,
     clearFilter,
     clearError,

@@ -123,25 +123,20 @@
           暂无最近执行记录
         </div>
         <div v-else class="recent-list">
-          <div
-            v-for="task in recentTasks"
-            :key="task.id"
-            class="recent-item"
-            @click="goToTask(task.id)"
-          >
+          <div v-for="task in recentTasks" :key="task.id" class="recent-item" @click="goToTask(task.id)">
             <div class="recent-info">
               <div class="recent-name">{{ task.name }}</div>
               <div class="recent-meta">
                 <span class="task-type" :class="task.type">
                   {{ task.type === 'keepalive' ? '保活' : '通知' }}
                 </span>
-                <span v-if="task.lastExecuted" class="recent-time">
-                  {{ formatDate(task.lastExecuted) }}
+                <span v-if="task.last_executed" class="recent-time">
+                  {{ formatDate(task.last_executed) }}
                 </span>
               </div>
             </div>
-            <div v-if="task.lastStatus" class="recent-status" :class="task.lastStatus">
-              {{ task.lastStatus === 'success' ? '✓ 成功' : '✗ 失败' }}
+            <div v-if="task.last_status" class="recent-status" :class="task.last_status">
+              {{ task.last_status === 'success' ? '✓ 成功' : '✗ 失败' }}
             </div>
           </div>
         </div>
@@ -157,12 +152,7 @@
           暂无日志记录
         </div>
         <div v-else class="logs-list">
-          <div
-            v-for="log in recentLogs"
-            :key="log.id"
-            class="log-item"
-            :class="log.status"
-          >
+          <div v-for="log in recentLogs" :key="log.id" class="log-item" :class="log.status">
             <div class="log-status" :class="log.status">
               {{ log.status === 'success' ? '✓' : '✗' }}
             </div>
@@ -198,10 +188,10 @@ const loading = ref(false)
 // 最近执行的任务（有执行记录的任务，按最后执行时间排序）
 const recentTasks = computed(() => {
   return tasksStore.tasks
-    .filter(task => task.lastExecuted)
+    .filter(task => task.last_executed)
     .sort((a, b) => {
-      const dateA = new Date(a.lastExecuted!).getTime()
-      const dateB = new Date(b.lastExecuted!).getTime()
+      const dateA = new Date(a.last_executed!).getTime()
+      const dateB = new Date(b.last_executed!).getTime()
       return dateB - dateA
     })
     .slice(0, 5)
@@ -237,7 +227,7 @@ function formatDate(dateString: string): string {
   const date = new Date(dateString)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
-  
+
   // 小于1分钟
   if (diff < 60000) {
     return '刚刚'
