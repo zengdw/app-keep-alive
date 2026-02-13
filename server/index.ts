@@ -1,5 +1,5 @@
 import { Environment } from './types/index.js';
-import { CronService } from './services/scheduled.service.js';
+import { ScheduledService } from './services/scheduled.service.js';
 import { staticRoutes, dynamicRoutes } from './routes/index.js';
 import { ResponseUtils } from './utils/response.js';
 import { RateLimitMiddleware } from './middleware/rate-limit.js';
@@ -52,7 +52,7 @@ export default {
 
 		try {
 			// 处理所有定时任务
-			const result = await CronService.handleScheduledEvent(env);
+			const result = await ScheduledService.handleScheduledEvent(env);
 
 			if (result.success) {
 				console.log(`定时任务处理成功，执行了 ${result.processed} 个任务`);
